@@ -189,10 +189,10 @@ function calculateProgress({ doneList, todoList }) {
   return 0;
 }
 
-// const initialTodoList = ['Do a', 'Do b', 'Do c'];
 // const initialDoneList = ['Do d', 'Do e', 'Do f'];
-const initialTodoList = [];
+// const initialTodoList = ['Do a', 'Do b', 'Do c'];
 const initialDoneList = [];
+const initialTodoList = [];
 
 const Panel = () => {
   const [inputTask, setInputTask] = useState('');
@@ -200,7 +200,7 @@ const Panel = () => {
   // const [todoList, setTodoList] = useState(initialTodoList);
   const [doneList, setDoneList] = useLocalStorageState(
     'doneList',
-    initialTodoList
+    initialDoneList
   );
   const [todoList, setTodoList] = useLocalStorageState(
     'todoList',
@@ -222,9 +222,9 @@ const Panel = () => {
     // };
   }, [doneList, todoList]);
 
-  function taskExists(task) {
-    return todoList.includes(task) || doneList.includes(task);
-  }
+  // function taskExists(task) {
+  //   return todoList.includes(task) || doneList.includes(task);
+  // }
 
   function closeTask(task) {
     console.log(`Closing task ${task}`);
