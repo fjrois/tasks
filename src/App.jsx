@@ -2,17 +2,19 @@ import { MemoryRouter as Router, Switch, Route } from 'react-router-dom';
 // import icon from '../../assets/icon.svg';
 // import './App.global.css';
 
-import React, { useEffect, useState } from 'react';
-import LinearProgressWithLabel from './LinearProgressWithLabel.jsx';
+import React, { useEffect, useRef, useState } from 'react';
+
+import Autocomplete from '@mui/material/Autocomplete';
 import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
 import Grid from '@mui/material/Grid';
+import Grow from '@mui/material/Grow';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
-import Autocomplete from '@mui/material/Autocomplete';
 import TextField from '@mui/material/TextField';
-
 import { styled } from '@mui/material/styles';
+
+import LinearProgressWithLabel from './LinearProgressWithLabel.jsx';
 
 function useLocalStorageState(
   key,
@@ -92,14 +94,16 @@ const StyledPaper = styled(Paper)(({ theme }) => ({
   // border: `3px solid yellow`,
 }));
 
-const greenColor = '#91ff9a';
-const yellowColor = '#ffff8a';
+const colors = {
+  green: '#91ff9a',
+  yellow: '#ffff8a',
+};
 
 const ListItem = ({
   backgroundColor,
-  handleOnClick,
-  deleteTask,
   defaultElevation,
+  handleItemMiddleClick,
+  handleOnClick,
   icon = '',
   task,
 }) => {
@@ -111,8 +115,8 @@ const ListItem = ({
       elevation={elevation}
       key={task}
       onMouseDown={(event) => {
+        handleItemMiddleClick(task);
         if (event.button === 1 || (event.button === 0 && event.shiftKey)) {
-          deleteTask(task);
         } else if (event.button === 0) {
           handleOnClick(task);
         }
@@ -127,59 +131,95 @@ const ListItem = ({
   );
 };
 
-const TodoPanel = ({ closeTask, deleteTask, list = [] }) => {
+const ItemStack = ({
+  handleItemClick,
+  handleItemMiddleClick,
+  list = [],
+  type,
+}) => {
   const defaultElevation = 2;
+  const checked = true;
+
+  let itemBackgroundColor, title;
+  if (type === 'done') {
+    itemBackgroundColor = colors.green;
+    title = 'Done';
+  } else if (type === 'todo') {
+    itemBackgroundColor = colors.yellow;
+    title = 'To do';
+  }
+
+  // const loadedListRef = useRef(list.length === 0 ? [] : [list[0]]);
+
+  // useEffect(() => {
+  //   console.log('loadedListRef.current:', loadedListRef.current);
+  //   if (loadedListRef.current.length < list) {
+  //     loadedListRef.current = [
+  //       ...loadedListRef.current,
+  //       list[loadedListRef.current.length + 1],
+  //     ];
+  //   }
+  // });
+
+  const [firstRender, setFirstRender] = useState(true);
+  useEffect(() => {
+    console.log('HERE');
+    setFirstRender(false);
+  }, []);
+
   return (
     <>
-      <h2>To do</h2>
+      <Box
+        sx={{
+          // display: 'flex',
+          // flexWrap: 'wrap',
+          '& > :not(style)': {
+            m: 1,
+            // width: 128,
+            height: 28,
+            textAlign: 'center',
+          },
+        }}
+      >
+        <h2>{title}</h2>
+      </Box>
       <Stack spacing={2}>
-        {list.map((task) => (
-          <ListItem
-            backgroundColor={yellowColor}
-            defaultElevation={defaultElevation}
-            handleOnClick={closeTask}
-            deleteTask={() => deleteTask(task, 'todo')}
-            // icon={'✅'}
-            key={task}
-            task={task}
-          />
-        ))}
-      </Stack>
-    </>
-  );
-};
-
-const DonePanel = ({ deleteTask, list = [], openTask }) => {
-  const defaultElevation = 2;
-
-  return (
-    <>
-      <h2>Done</h2>
-      <Stack spacing={2}>
-        {list.map((task) => (
-          <ListItem
-            backgroundColor={greenColor}
-            defaultElevation={defaultElevation}
-            deleteTask={() => deleteTask(task, 'done')}
-            handleOnClick={openTask}
-            key={task}
-            // icon={'😅'}
-            task={task}
-          />
-        ))}
+        {/* {loadedListRef.current.map((task) => ( */}
+        {list.map((task, index) => {
+          return (
+            <Grow
+              in={checked}
+              key={task}
+              // enter
+              // appear
+              // mountOnEnter
+              style={{
+                transformOrigin: '0 0 0',
+                transitionDelay: firstRender ? '200ms' : '0ms',
+              }}
+              {...(checked ? { timeout: firstRender ? 2000 : 200 } : {})}
+            >
+              <span>
+                <ListItem
+                  backgroundColor={itemBackgroundColor}
+                  defaultElevation={defaultElevation}
+                  handleOnClick={handleItemClick}
+                  handleItemMiddleClick={() =>
+                    handleItemMiddleClick(task, 'todo')
+                  }
+                  // icon={'✅'}
+                  task={task}
+                />
+              </span>
+            </Grow>
+          );
+        })}
       </Stack>
     </>
   );
 };
 
 function calculateProgress({ doneList, todoList }) {
-  console.log();
-  console.log('doneList.length:', doneList.length);
-  console.log('todoList.length:', todoList.length);
-  console.log(
-    'Math.floor(doneList.length / (doneList.length + todoList.length)):',
-    Math.floor(doneList.length / (doneList.length + todoList.length))
-  );
   if (!todoList.length) return 100;
   if (doneList.length) {
     return Math.floor(
@@ -250,7 +290,6 @@ const Panel = () => {
         doneList.filter((doneTask) => doneTask !== task)
       );
     } else if (listName === 'todo') {
-      console.log('here');
       setTodoList((todoList) =>
         todoList.filter((todoTask) => todoTask !== task)
       );
@@ -306,8 +345,6 @@ const Panel = () => {
               id="inputTask"
               value={inputTask}
               onChange={(event) => setInputTask(event.target.value)}
-              // type="submit"
-              // onSubmit={(event) => addTodoTask(event.target.value)}
               freeSolo
               disableClearable
               options={everCreatedTasks.map((option) => {
@@ -326,36 +363,30 @@ const Panel = () => {
                 />
               )}
             />
-            {/* <Autocomplete
-            freeSolo
-            options={['asdfasd', 'asdfasdf'].map((option) => option)}
-            renderInput={(params) => <TextField {...params} label="freeSolo" />}
-          /> */}
           </form>
         </Box>
 
         <div>
           <Grid sx={{ flexGrow: 1 }} container spacing={2}>
-            {/* <hr /> */}
             <Grid item xs={6}>
-              <TodoPanel
-                deleteTask={deleteTask}
+              <ItemStack
+                handleItemClick={closeTask}
+                handleItemMiddleClick={deleteTask}
                 list={todoList}
-                closeTask={closeTask}
+                type="todo"
               />
             </Grid>
             {/* <hr /> */}
             <Grid item xs={6}>
-              <DonePanel
-                deleteTask={deleteTask}
+              <ItemStack
+                handleItemClick={openTask}
+                handleItemMiddleClick={deleteTask}
                 list={doneList}
-                openTask={openTask}
+                type="done"
               />
             </Grid>
             {/* <hr /> */}
-            {/* <SimplePaper /> */}
           </Grid>
-          {/* </Box> */}
         </div>
       </Container>
     </>
@@ -366,7 +397,6 @@ export default function App() {
   return (
     <Router>
       <Switch>
-        {/* <Route path="/" component={Hello} /> */}
         <Route path="/" component={Panel} />
       </Switch>
     </Router>
