@@ -37,17 +37,16 @@ function useLocalStorageState({
   });
   const prevKeyRef = useRef(key);
 
-  function updateLocalStorage() {
-    console.log(`Saving new ${key} value in localStorage`);
-    const prevKey = prevKeyRef.current;
-    if (prevKey !== key) {
-      window.localStorage.removeItem(prevKey);
-    }
-    prevKeyRef.current = key;
-    window.localStorage.setItem(key, serialize(state));
-  }
-
   useEffect(() => {
+    function updateLocalStorage() {
+      console.log(`Saving new ${key} value in localStorage`);
+      const prevKey = prevKeyRef.current;
+      if (prevKey !== key) {
+        window.localStorage.removeItem(prevKey);
+      }
+      prevKeyRef.current = key;
+      window.localStorage.setItem(key, serialize(state));
+    }
     if (debounce) {
       const timeoutId = setTimeout(() => {
         updateLocalStorage();
