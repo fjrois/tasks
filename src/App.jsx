@@ -444,7 +444,7 @@ const Panel = ({ data: { name: panelName } }) => {
 };
 
 function PanelsCluster() {
-  const [panelsList, setPanelsList] = useLocalStorageState({
+  const [panelsList] = useLocalStorageState({
     debounce: true,
     key: 'panelsList',
     defaultValue: [
