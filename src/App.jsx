@@ -16,11 +16,12 @@ import { styled } from '@mui/material/styles';
 
 import LinearProgressWithLabel from './LinearProgressWithLabel.jsx';
 
-function useLocalStorageState(
-  key,
+function useLocalStorageState({
+  debounce,
   defaultValue = '',
-  { serialize = JSON.stringify, deserialize = JSON.parse } = {}
-) {
+  key,
+  parsers: { serialize = JSON.stringify, deserialize = JSON.parse } = {},
+}) {
   const [state, setState] = React.useState(() => {
     const valueInLocalStorage = window.localStorage.getItem(key);
     if (valueInLocalStorage) {
@@ -34,14 +35,25 @@ function useLocalStorageState(
   });
   const prevKeyRef = React.useRef(key);
 
-  // Check the example at src/examples/local-state-key-change.js to visualize a key change
-  React.useEffect(() => {
+  function updateLocalStorage() {
+    console.log(`Saving new ${key} value in localStorage`);
     const prevKey = prevKeyRef.current;
     if (prevKey !== key) {
       window.localStorage.removeItem(prevKey);
     }
     prevKeyRef.current = key;
     window.localStorage.setItem(key, serialize(state));
+  }
+
+  React.useEffect(() => {
+    if (debounce) {
+      const timeoutId = setTimeout(() => {
+        updateLocalStorage();
+      }, 1000);
+      return () => clearTimeout(timeoutId);
+    } else {
+      updateLocalStorage();
+    }
   }, [key, state, serialize]);
 
   return [state, setState];
@@ -234,20 +246,30 @@ const initialDoneList = [];
 const initialTodoList = [];
 
 const Panel = () => {
-  const [inputTaskTitle, setInputTaskTitle] = useState('');
+  const [inputTaskTitle, setInputTaskTitle] = useLocalStorageState({
+    debounce: true,
+    defaultValue: '',
+    key: 'inputTaskTitle',
+  });
   // const [doneList, setDoneList] = useState(initialDoneList);
   // const [todoList, setTodoList] = useState(initialTodoList);
-  const [doneList, setDoneList] = useLocalStorageState(
-    'doneList',
-    initialDoneList
-  );
-  const [todoList, setTodoList] = useLocalStorageState(
-    'todoList',
-    initialTodoList
-  );
+  const [doneList, setDoneList] = useLocalStorageState({
+    debounce: true,
+    defaultValue: initialDoneList,
+    key: 'doneList',
+  });
+  const [todoList, setTodoList] = useLocalStorageState({
+    debounce: true,
+    defaultValue: initialTodoList,
+    key: 'todoList',
+  });
 
   const [everCreatedTaskTitles, setEverCreatedTaskTitles] =
-    useLocalStorageState('everCreatedTaskTitles', []);
+    useLocalStorageState({
+      debounce: true,
+      defaultValue: [],
+      key: 'everCreatedTaskTitles',
+    });
 
   const [progress, setProgress] = useState(0);
 
@@ -349,34 +371,40 @@ const Panel = () => {
           <form
             onSubmit={(event) => {
               event.preventDefault();
-              // const newTask = event.target.inputTask.value;
-              const taskCreated = createTask(inputTaskTitle);
-              if (!everCreatedTaskTitles.includes(inputTaskTitle)) {
-                setEverCreatedTaskTitles((everCreatedTaskTitles) => {
-                  const taskTitles = [...everCreatedTaskTitles, inputTaskTitle];
-                  while (taskTitles.length > 2) taskTitles.shift();
-                  return taskTitles;
-                });
-              }
-              if (taskCreated) {
-                setInputTaskTitle('');
+              if (inputTaskTitle) {
+                const taskCreated = createTask(inputTaskTitle);
+                if (!everCreatedTaskTitles.includes(inputTaskTitle)) {
+                  setEverCreatedTaskTitles((everCreatedTaskTitles) => {
+                    const taskTitles = [
+                      ...everCreatedTaskTitles,
+                      inputTaskTitle,
+                    ];
+                    while (taskTitles.length > 10) taskTitles.shift();
+                    return taskTitles;
+                  });
+                }
+                if (taskCreated) {
+                  setInputTaskTitle('');
+                }
               }
             }}
           >
             <Autocomplete
               id="inputTaskTitle"
-              value={inputTaskTitle}
-              onChange={(event) => setInputTaskTitle(event.target.value)}
+              value={inputTaskTitle || ''}
+              inputValue={inputTaskTitle || ''}
+              onChange={(event, newValue) => {
+                setInputTaskTitle(newValue);
+              }}
+              onInputChange={(event, newValue) => {
+                setInputTaskTitle(newValue);
+              }}
               freeSolo
               disableClearable
-              options={everCreatedTaskTitles.map((option) => {
-                return option || '';
-              })}
-              getOptionLabel={(option) => (option !== 0 ? option : '')} // TODO: fix selection returning 0 the first time selected
+              options={everCreatedTaskTitles.map((option) => option)}
               renderInput={(params) => (
                 <TextField
                   {...params}
-                  //     onClick={() => {}}
                   label="Add Task"
                   //     InputProps={{
                   //       ...params.InputProps,
