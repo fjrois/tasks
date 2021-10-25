@@ -11,6 +11,8 @@ import Grid from '@mui/material/Grid';
 import Grow from '@mui/material/Grow';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
+import Tab from '@mui/material/Tab';
+import Tabs from '@mui/material/Tabs';
 import TextField from '@mui/material/TextField';
 import { styled } from '@mui/material/styles';
 
@@ -247,23 +249,25 @@ function calculateProgress({ doneList, todoList }) {
 const initialDoneList = [];
 const initialTodoList = [];
 
-const Panel = () => {
+const Panel = ({ data: { name: panelName } }) => {
   const [inputTaskTitle, setInputTaskTitle] = useLocalStorageState({
     debounce: true,
     defaultValue: '',
     key: 'inputTaskTitle',
   });
+
   // const [doneList, setDoneList] = useState(initialDoneList);
   // const [todoList, setTodoList] = useState(initialTodoList);
+  const formattedPanelName = panelName.toLowerCase().replaceAll(' ', '');
   const [doneList, setDoneList] = useLocalStorageState({
     debounce: true,
     defaultValue: initialDoneList,
-    key: 'doneList',
+    key: `${formattedPanelName}_doneList`,
   });
   const [todoList, setTodoList] = useLocalStorageState({
     debounce: true,
     defaultValue: initialTodoList,
-    key: 'todoList',
+    key: `${formattedPanelName}_todoList`,
   });
 
   const [everCreatedTaskTitles, setEverCreatedTaskTitles] =
@@ -343,21 +347,20 @@ const Panel = () => {
 
   return (
     <>
-      <Container fixed maxWidth="sm">
-        <Box
-          sx={{
-            // display: 'flex',
-            // flexWrap: 'wrap',
-            '& > :not(style)': {
-              m: 1,
-              // width: 128,
-              height: 28,
-            },
-          }}
-        >
-          <LinearProgressWithLabel value={progress} />
-        </Box>
-        {/* <Box
+      <Box
+        sx={{
+          // display: 'flex',
+          // flexWrap: 'wrap',
+          '& > :not(style)': {
+            m: 1,
+            // width: 128,
+            height: 28,
+          },
+        }}
+      >
+        <LinearProgressWithLabel value={progress} />
+      </Box>
+      {/* <Box
         sx={{
           display: 'flex',
           flexWrap: 'wrap',
@@ -368,88 +371,128 @@ const Panel = () => {
           },
         }}
       > */}
-        <Box>
-          {' '}
-          <form
-            onSubmit={(event) => {
-              event.preventDefault();
-              if (inputTaskTitle) {
-                const taskCreated = createTask(inputTaskTitle);
-                if (!everCreatedTaskTitles.includes(inputTaskTitle)) {
-                  setEverCreatedTaskTitles((everCreatedTaskTitles) => {
-                    const taskTitles = [
-                      ...everCreatedTaskTitles,
-                      inputTaskTitle,
-                    ];
-                    while (taskTitles.length > 10) taskTitles.shift();
-                    return taskTitles;
-                  });
-                }
-                if (taskCreated) {
-                  setInputTaskTitle('');
-                }
+      <Box>
+        {' '}
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (inputTaskTitle) {
+              const taskCreated = createTask(inputTaskTitle);
+              if (!everCreatedTaskTitles.includes(inputTaskTitle)) {
+                setEverCreatedTaskTitles((everCreatedTaskTitles) => {
+                  const taskTitles = [...everCreatedTaskTitles, inputTaskTitle];
+                  while (taskTitles.length > 10) taskTitles.shift();
+                  return taskTitles;
+                });
               }
+              if (taskCreated) {
+                setInputTaskTitle('');
+              }
+            }
+          }}
+        >
+          <Autocomplete
+            id="inputTaskTitle"
+            value={inputTaskTitle || ''}
+            inputValue={inputTaskTitle || ''}
+            onChange={(event, newValue) => {
+              setInputTaskTitle(newValue);
             }}
-          >
-            <Autocomplete
-              id="inputTaskTitle"
-              value={inputTaskTitle || ''}
-              inputValue={inputTaskTitle || ''}
-              onChange={(event, newValue) => {
-                setInputTaskTitle(newValue);
-              }}
-              onInputChange={(event, newValue) => {
-                setInputTaskTitle(newValue);
-              }}
-              freeSolo
-              disableClearable
-              options={everCreatedTaskTitles.map((option) => option)}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Add Task"
-                  //     InputProps={{
-                  //       ...params.InputProps,
-                  //       type: 'search',
-                  //     }}
-                />
-              )}
-            />
-          </form>
-        </Box>
+            onInputChange={(event, newValue) => {
+              setInputTaskTitle(newValue);
+            }}
+            freeSolo
+            disableClearable
+            options={everCreatedTaskTitles.map((option) => option)}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Add Task"
+                //     InputProps={{
+                //       ...params.InputProps,
+                //       type: 'search',
+                //     }}
+              />
+            )}
+          />
+        </form>
+      </Box>
 
-        <div>
-          <Grid sx={{ flexGrow: 1 }} container spacing={2}>
-            <Grid item xs={6}>
-              <ItemStack
-                handleItemClick={closeTask}
-                handleItemMiddleClick={deleteTask}
-                list={todoList}
-                type="todo"
-              />
-            </Grid>
-            {/* <hr /> */}
-            <Grid item xs={6}>
-              <ItemStack
-                handleItemClick={openTask}
-                handleItemMiddleClick={deleteTask}
-                list={doneList}
-                type="done"
-              />
-            </Grid>
-            {/* <hr /> */}
+      <div>
+        <Grid sx={{ flexGrow: 1 }} container spacing={2}>
+          <Grid item xs={6}>
+            <ItemStack
+              handleItemClick={closeTask}
+              handleItemMiddleClick={deleteTask}
+              list={todoList}
+              type="todo"
+            />
           </Grid>
-        </div>
-      </Container>
+          {/* <hr /> */}
+          <Grid item xs={6}>
+            <ItemStack
+              handleItemClick={openTask}
+              handleItemMiddleClick={deleteTask}
+              list={doneList}
+              type="done"
+            />
+          </Grid>
+          {/* <hr /> */}
+        </Grid>
+      </div>
     </>
   );
 };
+
+function PanelsCluster() {
+  const [panelsList, setPanelsList] = useLocalStorageState({
+    debounce: true,
+    key: 'panelsList',
+    defaultValue: [
+      { name: 'Panel 1' },
+      { name: 'Panel 2' },
+      { name: 'Panel 3' },
+    ],
+  });
+  const [selectedTab, setSelectedTab] = useState(0);
+
+  return (
+    <Container fixed maxWidth="sm">
+      <PanelTabs
+        panelsList={panelsList}
+        selectedTab={selectedTab}
+        setSelectedTab={setSelectedTab}
+      />
+      {panelsList.map((panelData, index) =>
+        selectedTab === index ? (
+          <Panel key={panelData.name} data={panelData} />
+        ) : null
+      )}
+    </Container>
+  );
+}
+
+function PanelTabs({ panelsList, selectedTab, setSelectedTab }) {
+  return (
+    <Tabs
+      value={selectedTab}
+      onChange={(event, newValue) => setSelectedTab(newValue)}
+      variant="scrollable"
+      scrollButtons="auto"
+      aria-label="scrollable auto tabs example"
+    >
+      {panelsList.map((panel) => {
+        return <Tab key={panel.name} label={panel.name} />;
+      })}
+    </Tabs>
+  );
+}
 
 export default function App() {
   return (
     <Router>
       <Switch>
-        <Route path="/" component={Panel} />
+        <Route path="/" component={PanelsCluster} />
       </Switch>
     </Router>
   );
