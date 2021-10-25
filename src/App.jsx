@@ -138,7 +138,9 @@ const ListItem = ({
       onMouseEnter={() => setElevation(6)}
       onMouseLeave={() => setElevation(defaultElevation)}
     >
-      {icon || null} {task ? task.title : null}
+      <div>
+        {icon || null} {task ? task.title : null}
+      </div>
     </StyledPaper>
   );
 };
