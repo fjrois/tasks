@@ -48,9 +48,10 @@ function useLocalStorageState({
       window.localStorage.setItem(key, serialize(state));
     }
     if (debounce) {
+      const debounceMs = typeof debounce === 'number' ? debounce : 1000;
       const timeoutId = setTimeout(() => {
         updateLocalStorage();
-      }, 1000);
+      }, debounceMs);
       return () => clearTimeout(timeoutId);
     } else {
       updateLocalStorage();
@@ -259,12 +260,12 @@ const Panel = ({ data: { name: panelName } }) => {
   // const [todoList, setTodoList] = useState(initialTodoList);
   const formattedPanelName = panelName.toLowerCase().replaceAll(' ', '');
   const [doneList, setDoneList] = useLocalStorageState({
-    debounce: true,
+    debounce: 200,
     defaultValue: initialDoneList,
     key: `${formattedPanelName}_doneList`,
   });
   const [todoList, setTodoList] = useLocalStorageState({
-    debounce: true,
+    debounce: 200,
     defaultValue: initialTodoList,
     key: `${formattedPanelName}_todoList`,
   });
@@ -445,7 +446,7 @@ const Panel = ({ data: { name: panelName } }) => {
 
 function PanelsCluster() {
   const [panelsList] = useLocalStorageState({
-    debounce: true,
+    debounce: 400,
     key: 'panelsList',
     defaultValue: [
       { name: 'Panel 1' },
