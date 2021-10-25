@@ -111,7 +111,7 @@ const ListItem = ({
 
   return (
     <StyledPaper
-      sx={{ borderColor: 'blue', backgroundColor }}
+      sx={{ backgroundColor }}
       elevation={elevation}
       key={task.id}
       onMouseDown={(event) => {
@@ -135,16 +135,16 @@ const ItemStack = ({
   handleItemClick,
   handleItemMiddleClick,
   list = [],
-  type,
+  type: listType,
 }) => {
   const defaultElevation = 2;
   const checked = true;
 
   let itemBackgroundColor, title;
-  if (type === 'done') {
+  if (listType === 'done') {
     itemBackgroundColor = colors.green;
     title = 'Done';
-  } else if (type === 'todo') {
+  } else if (listType === 'todo') {
     itemBackgroundColor = colors.yellow;
     title = 'To do';
   }
@@ -204,7 +204,7 @@ const ItemStack = ({
                   defaultElevation={defaultElevation}
                   handleOnClick={handleItemClick}
                   handleItemMiddleClick={() =>
-                    handleItemMiddleClick(task, 'todo')
+                    handleItemMiddleClick(task, listType)
                   }
                   // icon={'✅'}
                   task={task}
@@ -255,9 +255,12 @@ const Panel = () => {
     setProgress(calculateProgress({ doneList, todoList }));
   }, [doneList, todoList]);
 
-  // function taskExists(task) {
-  //   return todoList.includes(task) || doneList.includes(task);
-  // }
+  function findTaskTitleInAnyList(taskTitle) {
+    if (todoList.find((todoTask) => todoTask.title === taskTitle))
+      return 'todo';
+    if (doneList.find((doneTask) => doneTask.title === taskTitle))
+      return 'done';
+  }
 
   function closeTask(task) {
     console.log(`Closing task "${task.title}" (${task.id})`);
@@ -275,9 +278,18 @@ const Panel = () => {
   }
 
   function createTask(taskTitle) {
-    console.log(`Creating task ${taskTitle}`);
-    const task = { id: uuidv4(), title: taskTitle };
-    setTodoList((todoList) => [...todoList, task]);
+    const listWithTask = findTaskTitleInAnyList(taskTitle);
+    if (listWithTask) {
+      console.log(
+        `There is already a task with the title ${taskTitle} in the '${listWithTask}' list`
+      );
+    } else {
+      console.log(`Creating task ${taskTitle}`);
+      const task = { dateCreated: Date.now(), id: uuidv4(), title: taskTitle };
+      console.log('task:', task);
+      setTodoList((todoList) => [...todoList, task]);
+      return task;
+    }
   }
 
   function openTask(task) {
@@ -338,7 +350,7 @@ const Panel = () => {
             onSubmit={(event) => {
               event.preventDefault();
               // const newTask = event.target.inputTask.value;
-              createTask(inputTaskTitle);
+              const taskCreated = createTask(inputTaskTitle);
               if (!everCreatedTaskTitles.includes(inputTaskTitle)) {
                 setEverCreatedTaskTitles((everCreatedTaskTitles) => {
                   const taskTitles = [...everCreatedTaskTitles, inputTaskTitle];
@@ -346,7 +358,9 @@ const Panel = () => {
                   return taskTitles;
                 });
               }
-              setInputTaskTitle('');
+              if (taskCreated) {
+                setInputTaskTitle('');
+              }
             }}
           >
             <Autocomplete
