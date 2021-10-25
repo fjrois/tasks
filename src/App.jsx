@@ -55,7 +55,7 @@ function useLocalStorageState({
     } else {
       updateLocalStorage();
     }
-  }, [debounce, key, serialize, state, updateLocalStorage]);
+  }, [debounce, key, serialize, state]);
 
   return [state, setState];
 }
