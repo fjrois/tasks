@@ -22,7 +22,7 @@ function useLocalStorageState({
   key,
   parsers: { serialize = JSON.stringify, deserialize = JSON.parse } = {},
 }) {
-  const [state, setState] = React.useState(() => {
+  const [state, setState] = useState(() => {
     const valueInLocalStorage = window.localStorage.getItem(key);
     if (valueInLocalStorage) {
       try {
@@ -33,7 +33,7 @@ function useLocalStorageState({
     }
     return typeof defaultValue === 'function' ? defaultValue() : defaultValue;
   });
-  const prevKeyRef = React.useRef(key);
+  const prevKeyRef = useRef(key);
 
   function updateLocalStorage() {
     console.log(`Saving new ${key} value in localStorage`);
@@ -45,7 +45,7 @@ function useLocalStorageState({
     window.localStorage.setItem(key, serialize(state));
   }
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (debounce) {
       const timeoutId = setTimeout(() => {
         updateLocalStorage();
@@ -54,7 +54,7 @@ function useLocalStorageState({
     } else {
       updateLocalStorage();
     }
-  }, [key, state, serialize]);
+  }, [debounce, key, serialize, state, updateLocalStorage]);
 
   return [state, setState];
 }
