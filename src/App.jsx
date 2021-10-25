@@ -1,8 +1,8 @@
 import { MemoryRouter as Router, Switch, Route } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 // import icon from '../../assets/icon.svg';
 // import './App.global.css';
-
-import React, { useEffect, useRef, useState } from 'react';
 
 import Autocomplete from '@mui/material/Autocomplete';
 import Box from '@mui/material/Box';
@@ -113,7 +113,7 @@ const ListItem = ({
     <StyledPaper
       sx={{ borderColor: 'blue', backgroundColor }}
       elevation={elevation}
-      key={task}
+      key={task.id}
       onMouseDown={(event) => {
         handleItemMiddleClick(task);
         if (event.button === 1 || (event.button === 0 && event.shiftKey)) {
@@ -126,7 +126,7 @@ const ListItem = ({
       onMouseEnter={() => setElevation(6)}
       onMouseLeave={() => setElevation(defaultElevation)}
     >
-      {icon} {task}
+      {icon || null} {task ? task.title : null}
     </StyledPaper>
   );
 };
@@ -163,7 +163,6 @@ const ItemStack = ({
 
   const [firstRender, setFirstRender] = useState(true);
   useEffect(() => {
-    console.log('HERE');
     setFirstRender(false);
   }, []);
 
@@ -189,7 +188,7 @@ const ItemStack = ({
           return (
             <Grow
               in={checked}
-              key={task}
+              key={task.id}
               // enter
               // appear
               // mountOnEnter
@@ -235,7 +234,7 @@ const initialDoneList = [];
 const initialTodoList = [];
 
 const Panel = () => {
-  const [inputTask, setInputTask] = useState('');
+  const [inputTaskTitle, setInputTaskTitle] = useState('');
   // const [doneList, setDoneList] = useState(initialDoneList);
   // const [todoList, setTodoList] = useState(initialTodoList);
   const [doneList, setDoneList] = useLocalStorageState(
@@ -247,19 +246,13 @@ const Panel = () => {
     initialTodoList
   );
 
-  const [everCreatedTasks, setEverCreatedTasks] = useLocalStorageState(
-    'everCreatedTasks',
-    []
-  );
+  const [everCreatedTaskTitles, setEverCreatedTaskTitles] =
+    useLocalStorageState('everCreatedTaskTitles', []);
 
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    console.log('Something Changed');
     setProgress(calculateProgress({ doneList, todoList }));
-    // return () => {
-    //   cleanup;
-    // };
   }, [doneList, todoList]);
 
   // function taskExists(task) {
@@ -267,31 +260,47 @@ const Panel = () => {
   // }
 
   function closeTask(task) {
-    console.log(`Closing task ${task}`);
-    setTodoList((todoList) => todoList.filter((todoTask) => todoTask !== task));
+    console.log(`Closing task "${task.title}" (${task.id})`);
+    setTodoList((todoList) =>
+      todoList.filter(
+        (todoTask) => todoTask.id !== task.id && todoTask.title !== task.title
+      )
+    );
     setDoneList((doneList) => [...doneList, task]);
   }
 
   function addTodoTask(task) {
-    console.log(`Adding todo task ${task}`);
+    console.log(`Adding todo task "${task.title}" (${task.id})`);
+    setTodoList((todoList) => [...todoList, task]);
+  }
+
+  function createTask(taskTitle) {
+    console.log(`Creating task ${taskTitle}`);
+    const task = { id: uuidv4(), title: taskTitle };
     setTodoList((todoList) => [...todoList, task]);
   }
 
   function openTask(task) {
-    console.log(`Opening task ${task}`);
-    setDoneList((doneList) => doneList.filter((todoTask) => todoTask !== task));
+    console.log(`Opening task "${task.title}" (${task.id})`);
+    setDoneList((doneList) =>
+      doneList.filter(
+        (todoTask) => todoTask.id !== task.id && todoTask.title !== task.title
+      )
+    );
     addTodoTask(task);
   }
 
   function deleteTask(task, listName) {
-    console.log(`Deleting task ${task} from ${listName} list`);
+    console.log(
+      `Deleting task "${task.title}" (${task.id}) from ${listName} list`
+    );
     if (listName === 'done') {
       setDoneList((doneList) =>
-        doneList.filter((doneTask) => doneTask !== task)
+        doneList.filter((doneTask) => doneTask.id !== task.id)
       );
     } else if (listName === 'todo') {
       setTodoList((todoList) =>
-        todoList.filter((todoTask) => todoTask !== task)
+        todoList.filter((todoTask) => todoTask.id !== task.id)
       );
     }
   }
@@ -329,25 +338,24 @@ const Panel = () => {
             onSubmit={(event) => {
               event.preventDefault();
               // const newTask = event.target.inputTask.value;
-              addTodoTask(inputTask);
-              if (!everCreatedTasks.includes(inputTask)) {
-                setEverCreatedTasks((everCreatedTasks) => {
-                  const newList = [...everCreatedTasks, inputTask];
-                  console.log('newList:', newList);
-                  while (newList.length > 2) newList.shift();
-                  return newList;
+              createTask(inputTaskTitle);
+              if (!everCreatedTaskTitles.includes(inputTaskTitle)) {
+                setEverCreatedTaskTitles((everCreatedTaskTitles) => {
+                  const taskTitles = [...everCreatedTaskTitles, inputTaskTitle];
+                  while (taskTitles.length > 2) taskTitles.shift();
+                  return taskTitles;
                 });
               }
-              setInputTask('');
+              setInputTaskTitle('');
             }}
           >
             <Autocomplete
-              id="inputTask"
-              value={inputTask}
-              onChange={(event) => setInputTask(event.target.value)}
+              id="inputTaskTitle"
+              value={inputTaskTitle}
+              onChange={(event) => setInputTaskTitle(event.target.value)}
               freeSolo
               disableClearable
-              options={everCreatedTasks.map((option) => {
+              options={everCreatedTaskTitles.map((option) => {
                 return option || '';
               })}
               getOptionLabel={(option) => (option !== 0 ? option : '')} // TODO: fix selection returning 0 the first time selected
