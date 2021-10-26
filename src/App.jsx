@@ -14,9 +14,9 @@ import Stack from '@mui/material/Stack';
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
 import TextField from '@mui/material/TextField';
-import { styled } from '@mui/material/styles';
+// import { styled } from '@mui/material/styles';
 
-import CircularProgressWithLabel from './CircularProgressWithLabel.jsx';
+// import CircularProgressWithLabel from './CircularProgressWithLabel.jsx';
 import LinearProgressWithLabel from './LinearProgressWithLabel.jsx';
 
 const colors = {
@@ -299,12 +299,16 @@ const Panel = ({ data: { name: panelName }, updatePanelMetadata }) => {
     });
 
   const [progress, setProgress] = useState(0);
+  console.log('progress:', progress);
 
   useEffect(() => {
     const updatedProgress = calculateProgress({ doneList, todoList });
     setProgress(updatedProgress);
-    updatePanelMetadata({ progress: updatedProgress });
   }, [doneList, todoList]);
+  useEffect(() => {
+    updatePanelMetadata({ progress });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [progress]);
 
   function findTaskTitleInAnyList(taskTitle) {
     if (
