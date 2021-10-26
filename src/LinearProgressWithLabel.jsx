@@ -8,7 +8,7 @@ export default function LinearProgressWithLabel(props) {
   const { hidelabel: hideLabel, size, value } = props;
   return (
     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-      <Box sx={{ width: '100%', mr: 1 }}>
+      <Box sx={{ width: '100%', mr: hideLabel ? 0 : 1 }}>
         <LinearProgress variant="determinate" {...props} />
       </Box>
       {hideLabel ? null : (
