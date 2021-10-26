@@ -19,6 +19,11 @@ import { styled } from '@mui/material/styles';
 import CircularProgressWithLabel from './CircularProgressWithLabel.jsx';
 import LinearProgressWithLabel from './LinearProgressWithLabel.jsx';
 
+const colors = {
+  green: '#91ff9a',
+  yellow: '#ffff8a',
+};
+
 function useLocalStorageState({
   debounce,
   defaultValue = '',
@@ -111,11 +116,6 @@ function useLocalStorageState({
 // border: `3px solid yellow`,
 // }));
 
-const colors = {
-  green: '#91ff9a',
-  yellow: '#ffff8a',
-};
-
 const ListItem = ({
   backgroundColor,
   defaultElevation,
@@ -127,6 +127,7 @@ const ListItem = ({
   const [elevation, setElevation] = useState(defaultElevation);
   const higherElevation = 8;
 
+  let clickStartMs;
   return (
     <Paper
       // variant={'outlined'}
@@ -143,10 +144,18 @@ const ListItem = ({
       elevation={elevation}
       key={task.id}
       onMouseDown={(event) => {
-        handleItemMiddleClick(task);
-        if (event.button === 1 || (event.button === 0 && event.shiftKey)) {
-        } else if (event.button === 0) {
-          handleOnClick(task);
+        clickStartMs = Date.now();
+      }}
+      onMouseUp={(event) => {
+        const clickTimeMs = Date.now() - clickStartMs;
+        if (clickTimeMs > 600) {
+          handleItemMiddleClick(task);
+        } else {
+          if (event.button === 1 || (event.button === 0 && event.shiftKey)) {
+            handleItemMiddleClick(task);
+          } else if (event.button === 0) {
+            handleOnClick(task);
+          }
         }
       }}
       // onPress={() => handleOnDoubleClick(task)}
@@ -225,7 +234,7 @@ const ItemStack = ({
                 transformOrigin: '0 0 0',
                 transitionDelay: firstRender ? '200ms' : '0ms',
               }}
-              {...(checked ? { timeout: firstRender ? 2000 : 200 } : {})}
+              {...(checked ? { timeout: firstRender ? 1000 : 200 } : {})}
             >
               <span>
                 <ListItem
@@ -298,9 +307,17 @@ const Panel = ({ data: { name: panelName }, updatePanelMetadata }) => {
   }, [doneList, todoList]);
 
   function findTaskTitleInAnyList(taskTitle) {
-    if (todoList.find((todoTask) => todoTask.title === taskTitle))
+    if (
+      todoList.find(
+        (todoTask) => todoTask.title.toLowerCase() === taskTitle.toLowerCase()
+      )
+    )
       return 'todo';
-    if (doneList.find((doneTask) => doneTask.title === taskTitle))
+    if (
+      doneList.find(
+        (doneTask) => doneTask.title.toLowerCase() === taskTitle.toLowerCase()
+      )
+    )
       return 'done';
   }
 
@@ -385,7 +402,18 @@ const Panel = ({ data: { name: panelName }, updatePanelMetadata }) => {
           },
         }}
       > */}
-      <Box sx={{ paddingTop: '15px', paddingBottom: '10px' }}>
+      <Box
+        sx={{
+          // alignContent: 'center',
+          // display: 'block',
+          // alignItems: 'center',
+          // justifyContent: 'center',
+          paddingTop: '15px',
+          paddingBottom: '7px',
+          // maxWidth: '80%',
+          // width: '80%',
+        }}
+      >
         {' '}
         <form
           onSubmit={(event) => {
@@ -395,7 +423,7 @@ const Panel = ({ data: { name: panelName }, updatePanelMetadata }) => {
               if (!everCreatedTaskTitles.includes(inputTaskTitle)) {
                 setEverCreatedTaskTitles((everCreatedTaskTitles) => {
                   const taskTitles = [...everCreatedTaskTitles, inputTaskTitle];
-                  while (taskTitles.length > 10) taskTitles.shift();
+                  while (taskTitles.length > 5) taskTitles.shift();
                   return taskTitles;
                 });
               }
@@ -417,11 +445,13 @@ const Panel = ({ data: { name: panelName }, updatePanelMetadata }) => {
             }}
             freeSolo
             disableClearable
-            options={everCreatedTaskTitles.map((option) => option)}
+            // options={everCreatedTaskTitles.map((option) => option)}
+            options={[].map((option) => option)}
             renderInput={(params) => (
               <TextField
                 {...params}
                 label="Add Task"
+                size="small"
                 //     InputProps={{
                 //       ...params.InputProps,
                 //       type: 'search',
@@ -463,9 +493,9 @@ function PanelsCluster() {
     debounce: 400,
     key: 'panelsList',
     defaultValue: [
-      { id: 'id1', name: 'Panel 1', progress: 10 },
-      { id: 'id2', name: 'Panel 2', progress: 40 },
-      { id: 'id3', name: 'Panel 3', progress: 75 },
+      // { id: 'id1', name: 'Panel 1' },
+      // { id: 'id2', name: 'Panel 2' },
+      // { id: 'id3', name: 'Panel 3' },
     ],
   });
   const [selectedTab, setSelectedTab] = useState(0);
@@ -485,9 +515,48 @@ function PanelsCluster() {
     });
   }
 
+  function createPanel(panelName) {
+    if (
+      panelsList.find(
+        (panel) => panel.name.toLowerCase() === panelName.toLowerCase()
+      )
+    ) {
+      console.log(`There is already a panel with the name ${panelName}`);
+    } else {
+      console.log(`Creating panel ${panelName}`);
+      const updatedPanelsList = [...panelsList];
+      const newPanelMetadata = { id: uuidv4(), name: panelName };
+      updatedPanelsList.push(newPanelMetadata);
+      setPanelsList(updatedPanelsList);
+      return newPanelMetadata;
+    }
+  }
+
+  function deletePanel(panelToDelete) {
+    if (
+      window.confirm(
+        `Are you sure that you want to delete panel ${panelToDelete.name}?`
+      )
+    ) {
+      console.log(`Deleting panel ${panelToDelete.name} (${panelToDelete.id})`);
+      if (
+        selectedTab === panelsList.length - 1 &&
+        panelsList[selectedTab].id === panelToDelete.id
+      ) {
+        setSelectedTab(0);
+      }
+      const updatedPanelsList = panelsList.filter(
+        (panel) => panel.id !== panelToDelete.id
+      );
+      setPanelsList(updatedPanelsList);
+    }
+  }
+
   return (
     <Container fixed maxWidth="sm">
       <PanelTabs
+        createPanel={createPanel}
+        deletePanel={deletePanel}
         panelsList={panelsList}
         selectedTab={selectedTab}
         setSelectedTab={setSelectedTab}
@@ -510,45 +579,100 @@ function PanelsCluster() {
   );
 }
 
-function PanelTabs({ panelsList, selectedTab, setSelectedTab }) {
+function PanelTabs({
+  createPanel,
+  deletePanel,
+  panelsList,
+  selectedTab = 0,
+  setSelectedTab,
+}) {
+  const [newPanelName, setNewPanelName] = useState('');
+
   return (
-    <Tabs
-      value={selectedTab}
-      onChange={(event, newValue) => setSelectedTab(newValue)}
-      variant="scrollable"
-      scrollButtons="auto"
-      aria-label="scrollable auto tabs example"
-    >
-      {panelsList.map((panel) => {
-        return (
-          <Tab
-            key={panel.name}
-            label={
-              <Box
-                sx={{
-                  // display: 'flex',
-                  // flexWrap: 'wrap',
-                  '& > :not(style)': {
-                    m: 1,
-                    // width: 128,
-                    // height: 100,
-                  },
-                }}
-              >
-                <Box>{panel.name}</Box>
-                <Box>
-                  <LinearProgressWithLabel
-                    hidelabel={1}
-                    size={'s'}
-                    value={panel.progress}
-                  />
-                </Box>
-              </Box>
-            }
-          />
-        );
-      })}
-    </Tabs>
+    <>
+      <Grid container spacing={2}>
+        <Grid item xs={9}>
+          <Tabs
+            value={selectedTab}
+            onChange={(event, newValue) => setSelectedTab(newValue)}
+            variant="scrollable"
+            scrollButtons="auto"
+            aria-label="scrollable auto tabs example"
+          >
+            {panelsList.map((panel) => {
+              return (
+                <Tab
+                  key={panel.name}
+                  onMouseDown={(event) => {
+                    if (
+                      event.button === 1 ||
+                      (event.button === 0 && event.shiftKey)
+                    ) {
+                      deletePanel(panel);
+                    }
+                    //  else if (event.button === 0) {
+                    //   handleOnClick(task);
+                    // }
+                  }}
+                  label={
+                    <Box
+                      sx={{
+                        // display: 'flex',
+                        // flexWrap: 'wrap',
+                        // '& > :not(style)': {
+                        // m: 1,
+                        // width: 128,
+                        // height: 100,
+                        // },
+                        marginTop: '2px',
+                      }}
+                    >
+                      <Box>{panel.name}</Box>
+                      <Box>
+                        <LinearProgressWithLabel
+                          // color={color.yellow}
+                          hidelabel={1}
+                          size={'s'}
+                          value={panel.progress || 0}
+                        />
+                      </Box>
+                    </Box>
+                  }
+                />
+              );
+            })}
+          </Tabs>
+        </Grid>
+        <Grid item xs={3}>
+          <Box
+            sx={{
+              marginTop: '10px',
+              // display: 'flex',
+              // justifyContent: 'right',
+              // alignContent: 'right',
+            }}
+          >
+            <form
+              onSubmit={(event) => {
+                event.preventDefault();
+                const newPanelMetadata = createPanel(newPanelName);
+                if (newPanelMetadata) {
+                  setNewPanelName('');
+                }
+              }}
+            >
+              <TextField
+                onChange={(event) => setNewPanelName(event.target.value)}
+                label="Add Panel"
+                sx={{ width: '100%' }}
+                size="small"
+                value={newPanelName}
+              />
+            </form>
+          </Box>
+        </Grid>
+      </Grid>
+    </>
   );
 }
 
