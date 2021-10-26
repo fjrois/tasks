@@ -16,6 +16,7 @@ import Tabs from '@mui/material/Tabs';
 import TextField from '@mui/material/TextField';
 import { styled } from '@mui/material/styles';
 
+import CircularProgressWithLabel from './CircularProgressWithLabel.jsx';
 import LinearProgressWithLabel from './LinearProgressWithLabel.jsx';
 
 function useLocalStorageState({
@@ -25,6 +26,7 @@ function useLocalStorageState({
   parsers: { serialize = JSON.stringify, deserialize = JSON.parse } = {},
 }) {
   const [state, setState] = useState(() => {
+    console.log(`Restoring ${key} value from localStorage`);
     const valueInLocalStorage = window.localStorage.getItem(key);
     if (valueInLocalStorage) {
       try {
@@ -98,15 +100,16 @@ function useLocalStorageState({
 //   );
 // };
 
-const StyledPaper = styled(Paper)(({ theme }) => ({
-  // ...theme.typography.body2,
-  color: theme.palette.text.secondary,
-  height: 80,
-  lineHeight: '70px',
-  textAlign: 'center',
-  // backgroundColor: '#ffff8a',
-  // border: `3px solid yellow`,
-}));
+// const StyledPaper = styled(Paper)(({ theme }) => ({
+// ...theme.typography.body2,
+// color: theme.palette.text.secondary,
+// height: 80,
+// lineHeight: '70px',
+// minHeight: 100,
+// textAlign: 'center',
+// backgroundColor: '#ffff8a',
+// border: `3px solid yellow`,
+// }));
 
 const colors = {
   green: '#91ff9a',
@@ -122,10 +125,21 @@ const ListItem = ({
   task,
 }) => {
   const [elevation, setElevation] = useState(defaultElevation);
+  const higherElevation = 8;
 
   return (
-    <StyledPaper
-      sx={{ backgroundColor }}
+    <Paper
+      // variant={'outlined'}
+      sx={{
+        backgroundColor,
+        color: 'text.secondary',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        minHeight: 50,
+        padding: '15px',
+        textAlign: 'center',
+      }}
       elevation={elevation}
       key={task.id}
       onMouseDown={(event) => {
@@ -137,13 +151,11 @@ const ListItem = ({
       }}
       // onPress={() => handleOnDoubleClick(task)}
       // onClick={() => handleOnClick(task)}
-      onMouseEnter={() => setElevation(6)}
+      onMouseEnter={() => setElevation(higherElevation)}
       onMouseLeave={() => setElevation(defaultElevation)}
     >
-      <div>
-        {icon || null} {task ? task.title : null}
-      </div>
-    </StyledPaper>
+      {icon || null} {task ? task.title : null}
+    </Paper>
   );
 };
 
@@ -153,7 +165,7 @@ const ItemStack = ({
   list = [],
   type: listType,
 }) => {
-  const defaultElevation = 2;
+  const defaultElevation = 1;
   const checked = true;
 
   let itemBackgroundColor, title;
@@ -183,7 +195,7 @@ const ItemStack = ({
   }, []);
 
   return (
-    <>
+    <Box>
       <Box
         sx={{
           // display: 'flex',
@@ -194,9 +206,10 @@ const ItemStack = ({
             height: 28,
             textAlign: 'center',
           },
+          color: 'text.secondary',
         }}
       >
-        <h2>{title}</h2>
+        <h3>{title.toUpperCase()}</h3>
       </Box>
       <Stack spacing={2}>
         {/* {loadedListRef.current.map((task) => ( */}
@@ -222,7 +235,6 @@ const ItemStack = ({
                   handleItemMiddleClick={() =>
                     handleItemMiddleClick(task, listType)
                   }
-                  // icon={'✅'}
                   task={task}
                 />
               </span>
@@ -230,7 +242,7 @@ const ItemStack = ({
           );
         })}
       </Stack>
-    </>
+    </Box>
   );
 };
 
@@ -249,7 +261,7 @@ function calculateProgress({ doneList, todoList }) {
 const initialDoneList = [];
 const initialTodoList = [];
 
-const Panel = ({ data: { name: panelName } }) => {
+const Panel = ({ data: { name: panelName }, updatePanelMetadata }) => {
   const [inputTaskTitle, setInputTaskTitle] = useLocalStorageState({
     debounce: true,
     defaultValue: '',
@@ -280,7 +292,9 @@ const Panel = ({ data: { name: panelName } }) => {
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    setProgress(calculateProgress({ doneList, todoList }));
+    const updatedProgress = calculateProgress({ doneList, todoList });
+    setProgress(updatedProgress);
+    updatePanelMetadata({ progress: updatedProgress });
   }, [doneList, todoList]);
 
   function findTaskTitleInAnyList(taskTitle) {
@@ -347,7 +361,7 @@ const Panel = ({ data: { name: panelName } }) => {
 
   return (
     <>
-      <Box
+      {/* <Box
         sx={{
           // display: 'flex',
           // flexWrap: 'wrap',
@@ -359,7 +373,7 @@ const Panel = ({ data: { name: panelName } }) => {
         }}
       >
         <LinearProgressWithLabel value={progress} />
-      </Box>
+      </Box> */}
       {/* <Box
         sx={{
           display: 'flex',
@@ -371,7 +385,7 @@ const Panel = ({ data: { name: panelName } }) => {
           },
         }}
       > */}
-      <Box>
+      <Box sx={{ paddingTop: '15px', paddingBottom: '10px' }}>
         {' '}
         <form
           onSubmit={(event) => {
@@ -445,16 +459,31 @@ const Panel = ({ data: { name: panelName } }) => {
 };
 
 function PanelsCluster() {
-  const [panelsList] = useLocalStorageState({
+  const [panelsList, setPanelsList] = useLocalStorageState({
     debounce: 400,
     key: 'panelsList',
     defaultValue: [
-      { name: 'Panel 1' },
-      { name: 'Panel 2' },
-      { name: 'Panel 3' },
+      { id: 'id1', name: 'Panel 1', progress: 10 },
+      { id: 'id2', name: 'Panel 2', progress: 40 },
+      { id: 'id3', name: 'Panel 3', progress: 75 },
     ],
   });
   const [selectedTab, setSelectedTab] = useState(0);
+
+  function updatePanelMetadata({ panelId, updates }) {
+    const { progress } = updates;
+    setPanelsList((panelsList) => {
+      const foundPanelIndex = panelsList.findIndex(
+        (panel) => panel.id === panelId
+      );
+      const foundPanelData = panelsList[foundPanelIndex];
+      const updatedPanel = { ...foundPanelData };
+      updatedPanel.progress = progress;
+      const updatedPanelList = [...panelsList];
+      updatedPanelList[foundPanelIndex].progress = progress;
+      return updatedPanelList;
+    });
+  }
 
   return (
     <Container fixed maxWidth="sm">
@@ -465,7 +494,16 @@ function PanelsCluster() {
       />
       {panelsList.map((panelData, index) =>
         selectedTab === index ? (
-          <Panel key={panelData.name} data={panelData} />
+          <Panel
+            key={panelData.id}
+            data={panelData}
+            updatePanelMetadata={(updates) =>
+              updatePanelMetadata({
+                panelId: panelData.id,
+                updates,
+              })
+            }
+          />
         ) : null
       )}
     </Container>
@@ -482,7 +520,33 @@ function PanelTabs({ panelsList, selectedTab, setSelectedTab }) {
       aria-label="scrollable auto tabs example"
     >
       {panelsList.map((panel) => {
-        return <Tab key={panel.name} label={panel.name} />;
+        return (
+          <Tab
+            key={panel.name}
+            label={
+              <Box
+                sx={{
+                  // display: 'flex',
+                  // flexWrap: 'wrap',
+                  '& > :not(style)': {
+                    m: 1,
+                    // width: 128,
+                    // height: 100,
+                  },
+                }}
+              >
+                <Box>{panel.name}</Box>
+                <Box>
+                  <LinearProgressWithLabel
+                    hidelabel={1}
+                    size={'s'}
+                    value={panel.progress}
+                  />
+                </Box>
+              </Box>
+            }
+          />
+        );
       })}
     </Tabs>
   );
