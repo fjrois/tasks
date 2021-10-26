@@ -5,27 +5,28 @@ import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 
 export default function LinearProgressWithLabel(props) {
+  const { hidelabel: hideLabel, size, value } = props;
   return (
     <Box sx={{ display: 'flex', alignItems: 'center' }}>
       <Box sx={{ width: '100%', mr: 1 }}>
         <LinearProgress variant="determinate" {...props} />
       </Box>
-      <Box sx={{ minWidth: 35 }}>
-        <Typography variant="body2" color="text.secondary">{`${Math.round(
-          props.value
-        )}%`}</Typography>
-      </Box>
+      {hideLabel ? null : (
+        <Box sx={{ minWidth: size === 's' ? 2 : 35 }}>
+          {/* <Box sx={{ minWidth: 50 }}> */}
+          <Typography variant="body2" color="text.secondary">{`${Math.round(
+            value
+          )}%`}</Typography>
+        </Box>
+      )}
     </Box>
   );
 }
 
-LinearProgressWithLabel.propTypes = {
-  /**
-   * The value of the progress indicator for the determinate and buffer variants.
-   * Value between 0 and 100.
-   */
-  value: PropTypes.number.isRequired,
-};
+// LinearProgressWithLabel.propTypes = {
+//   hidepercentage: PropTypes.any,
+//   value: PropTypes.number.isRequired,
+// };
 
 // export default function LinearWithValueLabel() {
 //   const [progress, setProgress] = React.useState(10);
