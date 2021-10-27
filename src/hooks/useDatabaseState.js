@@ -36,7 +36,7 @@ export default function useDatabaseState({
       console.log(`Updating ${dbPath}: ${JSON.stringify(updates)}`);
       update(ref(database), updates);
     }
-  }, [state]);
+  }, [database, dbPath, defaultValue, state]);
 
   useEffect(() => {
     // Subscribe to db changes
@@ -50,6 +50,7 @@ export default function useDatabaseState({
       );
       setState(updatedState);
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return [state, setState];

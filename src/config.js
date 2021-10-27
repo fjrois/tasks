@@ -1,4 +1,4 @@
-export default {
+const config = {
   firebase: {
     apiKey: process.env.FIREBASE_API_KEY,
     authDomain: 'tasks-f3816.firebaseapp.com',
@@ -9,3 +9,5 @@ export default {
     measurementId: 'G-NE37LF7LZ6',
   },
 };
+
+export default config;
