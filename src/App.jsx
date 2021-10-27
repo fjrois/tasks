@@ -16,14 +16,28 @@ import Tabs from '@mui/material/Tabs';
 import TextField from '@mui/material/TextField';
 // import { styled } from '@mui/material/styles';
 
-// import CircularProgressWithLabel from './CircularProgressWithLabel.jsx';
 import LinearProgressWithLabel from './LinearProgressWithLabel.jsx';
+import useDatabaseState from './hooks/useDatabaseState.js';
+
+import { initializeApp } from 'firebase/app';
+import { getDatabase } from 'firebase/database';
+// import { getAnalytics } from 'firebase/analytics';
+
+import config from './config';
+const { firebase: firebaseConfig } = config;
+
+// Initialize Firebase
+const firebaseApp = initializeApp(firebaseConfig);
+const database = getDatabase(firebaseApp);
+// const analytics = getAnalytics(firebaseApp);
 
 const colors = {
   green: '#91ff9a',
   yellow: '#ffff8a',
 };
+const user = 'user2';
 
+// TODO: use this when no connectivity
 function useLocalStorageState({
   debounce,
   defaultValue = '',
@@ -270,7 +284,10 @@ function calculateProgress({ doneList, todoList }) {
 const initialDoneList = [];
 const initialTodoList = [];
 
-const Panel = ({ data: { name: panelName }, updatePanelMetadata }) => {
+const Panel = ({
+  data: { id: panelId, name: panelName },
+  updatePanelMetadata,
+}) => {
   const [inputTaskTitle, setInputTaskTitle] = useLocalStorageState({
     debounce: true,
     defaultValue: '',
@@ -279,16 +296,28 @@ const Panel = ({ data: { name: panelName }, updatePanelMetadata }) => {
 
   // const [doneList, setDoneList] = useState(initialDoneList);
   // const [todoList, setTodoList] = useState(initialTodoList);
-  const formattedPanelName = panelName.toLowerCase().replaceAll(' ', '');
-  const [doneList, setDoneList] = useLocalStorageState({
-    debounce: 200,
+  // const formattedPanelName = panelName.toLowerCase().replaceAll(' ', '');
+  // const [doneList, setDoneList] = useLocalStorageState({
+  //   debounce: 200,
+  //   defaultValue: initialDoneList,
+  //   key: `${formattedPanelName}_doneList`,
+  // });
+  // const [todoList, setTodoList] = useLocalStorageState({
+  //   debounce: 200,
+  //   defaultValue: initialTodoList,
+  //   key: `${formattedPanelName}_todoList`,
+  // });
+  const [doneList, setDoneList] = useDatabaseState({
+    database,
+    dbPath: `/lists/${user}/${panelId}/done`,
+    // debounce: 200,
     defaultValue: initialDoneList,
-    key: `${formattedPanelName}_doneList`,
   });
-  const [todoList, setTodoList] = useLocalStorageState({
-    debounce: 200,
+  const [todoList, setTodoList] = useDatabaseState({
+    database,
+    dbPath: `/lists/${user}/${panelId}/todo`,
+    // debounce: 200,
     defaultValue: initialTodoList,
-    key: `${formattedPanelName}_todoList`,
   });
 
   const [everCreatedTaskTitles, setEverCreatedTaskTitles] =
@@ -493,16 +522,25 @@ const Panel = ({ data: { name: panelName }, updatePanelMetadata }) => {
 };
 
 function PanelsCluster() {
-  const [panelsList, setPanelsList] = useLocalStorageState({
-    debounce: 400,
-    key: 'panelsList',
-    defaultValue: [
-      // { id: 'id1', name: 'Panel 1' },
-      // { id: 'id2', name: 'Panel 2' },
-      // { id: 'id3', name: 'Panel 3' },
-    ],
+  // const [panelsList, setPanelsList] = useLocalStorageState({
+  //   debounce: 400,
+  //   key: 'panelsList',
+  //   defaultValue: [
+  //     // { id: 'id1', name: 'Panel 1' },
+  //     // { id: 'id2', name: 'Panel 2' },
+  //     // { id: 'id3', name: 'Panel 3' },
+  //   ],
+  // });
+  const [panelsList, setPanelsList] = useDatabaseState({
+    database,
+    // debounce: 400,
+    defaultValue: [],
+    dbPath: `panels/${user}`,
   });
-  const [selectedTab, setSelectedTab] = useState(0);
+  const [selectedTab, setSelectedTab] = useLocalStorageState({
+    defaultValue: 0,
+    key: `tasks:selected-tab`,
+  });
 
   function updatePanelMetadata({ panelId, updates }) {
     const { progress } = updates;
