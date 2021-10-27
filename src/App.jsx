@@ -1,5 +1,5 @@
 import { MemoryRouter as Router, Switch, Route } from 'react-router-dom';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 // import icon from '../../assets/icon.svg';
 // import './App.global.css';
@@ -18,6 +18,7 @@ import TextField from '@mui/material/TextField';
 
 import LinearProgressWithLabel from './LinearProgressWithLabel.jsx';
 import useDatabaseState from './hooks/useDatabaseState.js';
+import useLocalStorageState from './hooks/useLocalStorageState.js'; // TODO: use this when no connectivity
 
 import { initializeApp } from 'firebase/app';
 import { getDatabase } from 'firebase/database';
@@ -35,100 +36,8 @@ const colors = {
   green: '#91ff9a',
   yellow: '#ffff8a',
 };
-const user = 'user2';
 
-// TODO: use this when no connectivity
-function useLocalStorageState({
-  debounce,
-  defaultValue = '',
-  key,
-  parsers: { serialize = JSON.stringify, deserialize = JSON.parse } = {},
-}) {
-  const [state, setState] = useState(() => {
-    console.log(`Restoring ${key} value from localStorage`);
-    const valueInLocalStorage = window.localStorage.getItem(key);
-    if (valueInLocalStorage) {
-      try {
-        return deserialize(valueInLocalStorage);
-      } catch (error) {
-        window.localStorage.removeItem(key);
-      }
-    }
-    return typeof defaultValue === 'function' ? defaultValue() : defaultValue;
-  });
-  const prevKeyRef = useRef(key);
-
-  useEffect(() => {
-    function updateLocalStorage() {
-      console.log(`Saving new ${key} value in localStorage`);
-      const prevKey = prevKeyRef.current;
-      if (prevKey !== key) {
-        window.localStorage.removeItem(prevKey);
-      }
-      prevKeyRef.current = key;
-      window.localStorage.setItem(key, serialize(state));
-    }
-    if (debounce) {
-      const debounceMs = typeof debounce === 'number' ? debounce : 1000;
-      const timeoutId = setTimeout(() => {
-        updateLocalStorage();
-      }, debounceMs);
-      return () => clearTimeout(timeoutId);
-    } else {
-      updateLocalStorage();
-    }
-  }, [debounce, key, serialize, state]);
-
-  return [state, setState];
-}
-
-// const Hello = () => {
-//   return (
-//     <div>
-//       <div className="Hello">
-//         <img width="200px" alt="icon" src={icon} />
-//       </div>
-//       <h1>electron-react-boilerplate</h1>
-//       <div className="Hello">
-//         <a
-//           href="https://electron-react-boilerplate.js.org/"
-//           target="_blank"
-//           rel="noreferrer"
-//         >
-//           <button type="button">
-//             <span role="img" aria-label="books">
-//               📚
-//             </span>
-//             Read our docs
-//           </button>
-//         </a>
-//         <a
-//           href="https://github.com/sponsors/electron-react-boilerplate"
-//           target="_blank"
-//           rel="noreferrer"
-//         >
-//           <button type="button">
-//             <span role="img" aria-label="books">
-//               🙏
-//             </span>
-//             Donate
-//           </button>
-//         </a>
-//       </div>
-//     </div>
-//   );
-// };
-
-// const StyledPaper = styled(Paper)(({ theme }) => ({
-// ...theme.typography.body2,
-// color: theme.palette.text.secondary,
-// height: 80,
-// lineHeight: '70px',
-// minHeight: 100,
-// textAlign: 'center',
-// backgroundColor: '#ffff8a',
-// border: `3px solid yellow`,
-// }));
+const user = 'user2'; // TODO: use localStorage if not user logged in
 
 const ListItem = ({
   backgroundColor,
