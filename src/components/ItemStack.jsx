@@ -83,10 +83,8 @@ export default function ItemStack({
                 <ListItem
                   backgroundColor={itemBackgroundColor}
                   defaultElevation={defaultElevation}
-                  handleOnClick={handleItemClick}
-                  handleItemMiddleClick={() =>
-                    handleItemMiddleClick(task, listType)
-                  }
+                  handleOnClick={() => handleItemClick(task)}
+                  handleItemMiddleClick={() => handleItemMiddleClick(task)}
                   task={task}
                 />
               </span>

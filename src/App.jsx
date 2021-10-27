@@ -15,7 +15,7 @@ const firebaseApp = initializeApp(firebaseConfig);
 const database = getDatabase(firebaseApp);
 // const analytics = getAnalytics(firebaseApp);
 
-const user = 'user2'; // TODO: use localStorage if not user logged in
+const user = 'user1'; // TODO: use localStorage if not user logged in
 
 export default function App() {
   return (
