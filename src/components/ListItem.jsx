@@ -1,5 +1,5 @@
 import Paper from '@mui/material/Paper';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 
 export default function ListItem({
   backgroundColor,

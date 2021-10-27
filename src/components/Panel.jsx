@@ -87,7 +87,7 @@ export default function Panel({
   useEffect(() => {
     const updatedProgress = calculateProgress({ doneTasksList, todoTasksList });
     setProgress(updatedProgress);
-  }, [tasksList]);
+  }, [doneTasksList, todoTasksList]);
   useEffect(() => {
     updatePanelMetadata({ progress });
     // eslint-disable-next-line react-hooks/exhaustive-deps
