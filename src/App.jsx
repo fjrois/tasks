@@ -14,9 +14,9 @@ import Stack from '@mui/material/Stack';
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
 import TextField from '@mui/material/TextField';
-// import { styled } from '@mui/material/styles';
 
 import LinearProgressWithLabel from './LinearProgressWithLabel.jsx';
+// import logo from './logo.svg';
 import useDatabaseState from './hooks/useDatabaseState.js';
 import useLocalStorageState from './hooks/useLocalStorageState.js'; // TODO: use this when no connectivity
 
@@ -505,6 +505,7 @@ function PanelsCluster() {
 
   return (
     <Container fixed maxWidth="sm">
+      {/* <img src={logo} className="App-logo" alt="logo" /> */}
       <PanelTabs
         createPanel={createPanel}
         deletePanel={deletePanel}
