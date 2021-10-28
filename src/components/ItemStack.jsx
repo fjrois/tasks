@@ -14,6 +14,7 @@ const colors = {
 export default function ItemStack({
   handleItemClick,
   handleItemMiddleClick,
+  moveTaskToPanel,
   list = [],
   type: listType,
 }) {
@@ -85,6 +86,7 @@ export default function ItemStack({
                   defaultElevation={defaultElevation}
                   handleOnClick={() => handleItemClick(task)}
                   handleItemMiddleClick={() => handleItemMiddleClick(task)}
+                  moveTaskToPanel={moveTaskToPanel}
                   task={task}
                 />
               </span>

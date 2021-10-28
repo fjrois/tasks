@@ -6,7 +6,7 @@ export default function ListItem({
   defaultElevation,
   handleItemMiddleClick,
   handleOnClick,
-  icon = '',
+  moveTaskToPanel,
   task,
 }) {
   const [elevation, setElevation] = useState(defaultElevation);
@@ -48,7 +48,8 @@ export default function ListItem({
       onMouseEnter={() => setElevation(higherElevation)}
       onMouseLeave={() => setElevation(defaultElevation)}
     >
-      {icon || null} {task ? task.title : null}
+      {task ? task.title : null}
+      {/* <button onClick={() => moveTaskToPanel(task)}> NEXT</button> */}
     </Paper>
   );
 }

@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { v4 as uuidv4 } from 'uuid';
 
 import Autocomplete from '@mui/material/Autocomplete';
 import Box from '@mui/material/Box';
@@ -9,12 +8,6 @@ import TextField from '@mui/material/TextField';
 import ItemStack from './ItemStack.jsx';
 import useDatabaseState from '../hooks/useDatabaseState.js';
 import useLocalStorageState from '../hooks/useLocalStorageState.js'; // TODO: use this when no connectivity
-
-// const initialDoneList = ['Do d', 'Do e', 'Do f'];
-// const initialTodoList = ['Do a', 'Do b', 'Do c'];
-// const initialDoneList = [];
-// const initialTodoList = [];
-const initialTasksList = [];
 
 function calculateProgress({ doneTasksList, todoTasksList }) {
   if (!todoTasksList.length) return 100;
@@ -28,10 +21,15 @@ function calculateProgress({ doneTasksList, todoTasksList }) {
 }
 
 export default function Panel({
+  createTask,
   data: { id: panelId, name: panelName },
-  database,
+  // database,
+  deleteTask,
+  moveTaskToPanel,
+  tasksList,
   updatePanelMetadata,
-  user,
+  updateTask,
+  // user,
 }) {
   const [inputTaskTitle, setInputTaskTitle] = useLocalStorageState({
     debounce: true,
@@ -53,12 +51,13 @@ export default function Panel({
   //   key: `${formattedPanelName}_todoList`,
   // });
 
-  const [tasksList, setTasksList] = useDatabaseState({
-    database,
-    dbPath: `/lists/${user}/${panelId}`,
-    // debounce: 200,
-    defaultValue: initialTasksList,
-  });
+  // const [tasksList, setTasksList] = useDatabaseState({
+  //   database,
+  //   dbPath: `/lists/${user}/${panelId}`,
+  //   // debounce: 200,
+  //   defaultValue: initialTasksList,
+  // });
+
   // const [doneList, setDoneList] = useDatabaseState({
   //   database,
   //   dbPath: `/lists/${user}/${panelId}/done`,
@@ -71,8 +70,12 @@ export default function Panel({
   //   // debounce: 200,
   //   defaultValue: initialTodoList,
   // });
-  const doneTasksList = tasksList.filter((task) => task.status === 'done');
-  const todoTasksList = tasksList.filter((task) => task.status === 'todo');
+  const doneTasksList = tasksList
+    ? tasksList.filter((task) => task.status === 'done')
+    : [];
+  const todoTasksList = tasksList
+    ? tasksList.filter((task) => task.status === 'todo')
+    : [];
 
   const [everCreatedTaskTitles, setEverCreatedTaskTitles] =
     useLocalStorageState({
@@ -88,69 +91,70 @@ export default function Panel({
     const updatedProgress = calculateProgress({ doneTasksList, todoTasksList });
     setProgress(updatedProgress);
   }, [doneTasksList, todoTasksList]);
+
   useEffect(() => {
     updatePanelMetadata({ progress });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [progress]);
 
-  function createTask(taskTitle) {
-    const foundTask = findTaskTitle(taskTitle);
-    if (foundTask) {
-      console.log(
-        `There is already a task with the title ${taskTitle} in the '${foundTask.status}' list`
-      );
-    } else {
-      console.log(`Creating task ${taskTitle}`);
-      const task = {
-        dateCreated: Date.now(),
-        id: uuidv4(),
-        status: 'todo',
-        title: taskTitle,
-      };
-      console.log('task:', task);
-      setTasksList((tasksList) => [...tasksList, task]);
-      return task;
-    }
-  }
+  // function createTask(taskTitle) {
+  //   const foundTask = findTaskTitle(taskTitle);
+  //   if (foundTask) {
+  //     console.log(
+  //       `There is already a task with the title ${taskTitle} in the '${foundTask.status}' list`
+  //     );
+  //   } else {
+  //     console.log(`Creating task ${taskTitle}`);
+  //     const task = {
+  //       dateCreated: Date.now(),
+  //       id: uuidv4(),
+  //       status: 'todo',
+  //       title: taskTitle,
+  //     };
+  //     console.log('task:', task);
+  //     setTasksList((tasksList) => [...tasksList, task]);
+  //     return task;
+  //   }
+  // }
 
-  function deleteTask(taskToDelete) {
-    console.log(`Deleting task "${taskToDelete.title}" (${taskToDelete.id})`);
-    setTasksList((tasksList) =>
-      tasksList.filter((task) => task.id !== taskToDelete.id)
-    );
-  }
+  // function deleteTask(taskToDelete) {
+  //   console.log(`Deleting task "${taskToDelete.title}" (${taskToDelete.id})`);
+  //   setTasksList((tasksList) =>
+  //     tasksList.filter((task) => task.id !== taskToDelete.id)
+  //   );
+  // }
 
-  function findTaskTitle(taskTitle) {
-    const foundTask = tasksList.find(
-      (task) => task?.title?.toLowerCase() === taskTitle.toLowerCase()
-    );
-    return foundTask;
-  }
+  // function findTaskTitle(taskTitle) {
+  //   const foundTask = tasksList.find(
+  //     (task) => task?.title?.toLowerCase() === taskTitle.toLowerCase()
+  //   );
+  //   return foundTask;
+  // }
 
-  function updateTask(taskToUpdate, updates = {}) {
-    console.log(
-      `Updating task "${taskToUpdate.title}" (${
-        taskToUpdate.id
-      }): ${JSON.stringify(updates)}`
-    );
+  // function updateTask(taskToUpdate, updates = {}) {
+  //   console.log(
+  //     `Updating task "${taskToUpdate.title}" (${
+  //       taskToUpdate.id
+  //     }): ${JSON.stringify(updates)}`
+  //   );
 
-    setTasksList((tasksList) => {
-      const foundTaskIndex = tasksList.findIndex(
-        (task) => task.id === taskToUpdate.id
-      );
-      if (foundTaskIndex === -1) {
-        console.log(
-          `Task ${taskToUpdate.title} (${taskToUpdate.id}) doesn't seem to exist in this panel`
-        );
-        return tasksList;
-      }
-      const foundTask = tasksList[foundTaskIndex];
-      const updatedTask = { ...foundTask, ...updates };
-      const updatedTasksList = [...tasksList];
-      updatedTasksList[foundTaskIndex] = updatedTask;
-      return updatedTasksList;
-    });
-  }
+  //   setTasksList((tasksList) => {
+  //     const foundTaskIndex = tasksList.findIndex(
+  //       (task) => task.id === taskToUpdate.id
+  //     );
+  //     if (foundTaskIndex === -1) {
+  //       console.log(
+  //         `Task ${taskToUpdate.title} (${taskToUpdate.id}) doesn't seem to exist in this panel`
+  //       );
+  //       return tasksList;
+  //     }
+  //     const foundTask = tasksList[foundTaskIndex];
+  //     const updatedTask = { ...foundTask, ...updates };
+  //     const updatedTasksList = [...tasksList];
+  //     updatedTasksList[foundTaskIndex] = updatedTask;
+  //     return updatedTasksList;
+  //   });
+  // }
 
   return (
     <>
@@ -247,6 +251,7 @@ export default function Panel({
               }
               handleItemMiddleClick={deleteTask}
               list={todoTasksList}
+              moveTaskToPanel={moveTaskToPanel}
               type="todo"
             />
           </Grid>
