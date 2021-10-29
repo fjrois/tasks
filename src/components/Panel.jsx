@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 import Autocomplete from '@mui/material/Autocomplete';
 import Box from '@mui/material/Box';
@@ -71,15 +71,29 @@ export default function Panel({
   //   // debounce: 200,
   //   defaultValue: initialTodoList,
   // });
-  const doneTasksList = tasksList
-    ? tasksList.filter((task) => task && task.status === 'done')
-    : [];
+  // const doneTasksList = tasksList
+  //   ? tasksList.filter((task) => task && task.status === 'done')
+  //   : [];
+  const doneTasksList = useMemo(
+    () =>
+      tasksList
+        ? tasksList.filter((task) => task && task.status === 'done')
+        : [],
+    [tasksList]
+  );
   // const doneTasksList = tasksList.filter(
   //   (task) => task && task.status === 'done'
   // );
-  const todoTasksList = tasksList
-    ? tasksList.filter((task) => task.status === 'todo')
-    : [];
+  // const todoTasksList = tasksList
+  //   ? tasksList.filter((task) => task.status === 'todo')
+  //   : [];
+  const todoTasksList = useMemo(
+    () =>
+      tasksList
+        ? tasksList.filter((task) => task && task.status === 'todo')
+        : [],
+    [tasksList]
+  );
   // const todoTasksList = tasksList.filter((task) => task.status === 'todo');
 
   const [everCreatedTaskTitles, setEverCreatedTaskTitles] =
