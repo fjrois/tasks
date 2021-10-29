@@ -1,3 +1,4 @@
+import { isMobile } from 'react-device-detect';
 import React, { useEffect, useMemo, useState } from 'react';
 
 import Autocomplete from '@mui/material/Autocomplete';
@@ -278,7 +279,9 @@ export default function Panel({
                 />
               )}
             />
-            <button type="submit">ADD</button>
+            <button hidden={!isMobile} type="submit">
+              ADD
+            </button>
           </Box>
         </form>
       </Box>
