@@ -48,7 +48,6 @@ export default function PanelsCluster({ database, user }) {
     // debounce: 200,
     defaultValue: [],
   });
-  // console.log('tasksList:', tasksList);
 
   // const [tasksList, setTasksList] = useState([]);
 
@@ -188,6 +187,7 @@ export default function PanelsCluster({ database, user }) {
       console.log(`Creating task ${taskTitle}`);
       const task = {
         dateCreated: Date.now(),
+        dateModified: Date.now(),
         id: uuidv4(),
         status: 'todo',
         title: taskTitle,
@@ -231,7 +231,11 @@ export default function PanelsCluster({ database, user }) {
         return tasksList;
       }
       const foundTask = tasksList[foundTaskIndex];
-      const updatedTask = { ...foundTask, ...updates };
+      const updatedTask = {
+        ...foundTask,
+        ...updates,
+        dateModified: Date.now(),
+      };
       const updatedTasksList = [...tasksList];
       updatedTasksList[foundTaskIndex] = updatedTask;
       return updatedTasksList;
@@ -272,7 +276,9 @@ export default function PanelsCluster({ database, user }) {
                     targetPanelIndex: index + 1,
                   })
                 }
-                tasksList={tasksList}
+                tasksList={[...tasksList].sort(
+                  (task1, task2) => task1.dateModified - task2.dateModified
+                )}
                 // tasksList={
                 //   selectedPanelId !== 'all'
                 //   tasksList
