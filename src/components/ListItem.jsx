@@ -48,7 +48,8 @@ export default function ListItem({
       onMouseEnter={() => setElevation(higherElevation)}
       onMouseLeave={() => setElevation(defaultElevation)}
     >
-      {task ? task.title : null}
+      {task?.topic?.name ? `[${task.topic.name}] ` : null}
+      {task?.title || null}
       {/* <button onClick={() => moveTaskToPanel(task)}> NEXT</button> */}
     </Paper>
   );

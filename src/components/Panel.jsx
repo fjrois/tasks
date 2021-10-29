@@ -8,6 +8,7 @@ import IconButton from '@mui/material/IconButton';
 import TextField from '@mui/material/TextField';
 
 import ItemStack from './ItemStack.jsx';
+import TopicSelector from './TopicSelector.jsx';
 // import useDatabaseState from '../hooks/useDatabaseState.js';
 import useLocalStorageState from '../hooks/useLocalStorageState.js'; // TODO: use this when no connectivity
 
@@ -106,7 +107,13 @@ export default function Panel({
     });
 
   const [progress, setProgress] = useState(0);
-  console.log('progress:', progress);
+
+  const topics = {
+    id1: { name: 'Tasks' },
+    id2: { name: '' },
+    id3: { name: 'Epic React' },
+  };
+  const [selectedTopicId, setSelectedTopicId] = useState('');
 
   useEffect(() => {
     const updatedProgress = calculateProgress({ doneTasksList, todoTasksList });
@@ -203,24 +210,15 @@ export default function Panel({
           },
         }}
       > */}
-      <Box
-        sx={{
-          // alignContent: 'center',
-          // display: 'block',
-          // alignItems: 'center',
-          // justifyContent: 'center',
-          paddingTop: '15px',
-          paddingBottom: '7px',
-          // maxWidth: '80%',
-          // width: '80%',
-        }}
-      >
-        {' '}
+      <Box paddingTop="15px" paddingBottom="7px">
         <form
           onSubmit={(event) => {
             event.preventDefault();
             if (inputTaskTitle) {
-              const taskCreated = createTask(inputTaskTitle);
+              const taskCreated = createTask(
+                inputTaskTitle,
+                topics[selectedTopicId]
+              );
               if (!everCreatedTaskTitles.includes(inputTaskTitle)) {
                 setEverCreatedTaskTitles((everCreatedTaskTitles) => {
                   const taskTitles = [...everCreatedTaskTitles, inputTaskTitle];
@@ -234,45 +232,54 @@ export default function Panel({
             }
           }}
         >
-          <Autocomplete
-            id="inputTaskTitle"
-            disabled={!allowInput}
-            value={inputTaskTitle || ''}
-            inputValue={inputTaskTitle || ''}
-            onChange={(event, newValue) => {
-              setInputTaskTitle(newValue);
-            }}
-            onInputChange={(event, newValue) => {
-              setInputTaskTitle(newValue);
-            }}
-            freeSolo
-            disableClearable
-            // options={everCreatedTaskTitles.map((option) => option)}
-            options={[].map((option) => option)}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label="Add Task"
-                size="small"
-                //     InputProps={{
-                //       ...params.InputProps,
-                //       type: 'search',
-                //     }}
-                InputProps={{
-                  endAdornment: inputTaskTitle ? (
-                    <IconButton
-                      size="small"
-                      onClick={() => {
-                        setInputTaskTitle('');
-                      }}
-                    >
-                      <ClearIcon fontSize="10" />
-                    </IconButton>
-                  ) : null,
-                }}
-              />
-            )}
-          />
+          <Box display="flex" gap="10px">
+            <TopicSelector
+              selectedTopicId={selectedTopicId}
+              setSelectedTopicId={setSelectedTopicId}
+              topics={topics}
+            />
+            <Autocomplete
+              sx={{ width: '100%' }}
+              id="inputTaskTitle"
+              disabled={!allowInput}
+              value={inputTaskTitle || ''}
+              inputValue={inputTaskTitle || ''}
+              onChange={(event, newValue) => {
+                setInputTaskTitle(newValue);
+              }}
+              onInputChange={(event, newValue) => {
+                setInputTaskTitle(newValue);
+              }}
+              freeSolo
+              disableClearable
+              // options={everCreatedTaskTitles.map((option) => option)}
+              options={[].map((option) => option)}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Add Task"
+                  size="small"
+                  //     InputProps={{
+                  //       ...params.InputProps,
+                  //       type: 'search',
+                  //     }}
+                  InputProps={{
+                    endAdornment: inputTaskTitle ? (
+                      <IconButton
+                        size="small"
+                        onClick={() => {
+                          setInputTaskTitle('');
+                        }}
+                      >
+                        <ClearIcon fontSize="10" />
+                      </IconButton>
+                    ) : null,
+                  }}
+                />
+              )}
+            />
+            <button hidden type="submit" />
+          </Box>
         </form>
       </Box>
 

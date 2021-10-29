@@ -177,7 +177,7 @@ export default function PanelsCluster({ database, user }) {
   }
 
   // TASK OPERATIONS
-  function createTask(taskTitle) {
+  function createTask(taskTitle, topic) {
     const foundTask = findTaskTitle(taskTitle);
     if (foundTask) {
       console.log(
@@ -191,6 +191,7 @@ export default function PanelsCluster({ database, user }) {
         id: uuidv4(),
         status: 'todo',
         title: taskTitle,
+        topic: topic || null,
       };
       console.log('task:', task);
       setTasksList((tasksList) => (tasksList ? [...tasksList, task] : [task]));
