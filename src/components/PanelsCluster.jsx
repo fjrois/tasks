@@ -277,9 +277,14 @@ export default function PanelsCluster({ database, user }) {
                     targetPanelIndex: index + 1,
                   })
                 }
-                tasksList={[...tasksList].sort(
-                  (task1, task2) => task1.dateModified - task2.dateModified
-                )}
+                tasksList={
+                  tasksList
+                    ? [...tasksList].sort(
+                        (task1, task2) =>
+                          task1.dateModified - task2.dateModified
+                      )
+                    : null
+                }
                 // tasksList={
                 //   selectedPanelId !== 'all'
                 //   tasksList
