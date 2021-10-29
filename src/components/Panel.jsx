@@ -1,4 +1,4 @@
-import { isMobile } from 'react-device-detect';
+import { isChrome, isChromium } from 'react-device-detect';
 import React, { useEffect, useMemo, useState } from 'react';
 
 import Autocomplete from '@mui/material/Autocomplete';
@@ -98,12 +98,17 @@ export default function Panel({
       : tasksList;
   }, [selectedTopicFilter, tasksList]);
 
-  const doneTasksList = filteredTasksList.filter(
-    (task) => task && task.status === 'done'
-  );
-  const todoTasksList = filteredTasksList.filter(
-    (task) => task.status === 'todo'
-  );
+  const doneTasksList = useMemo(() => {
+    return filteredTasksList
+      ? filteredTasksList.filter((task) => task && task.status === 'done')
+      : [];
+  }, [filteredTasksList]);
+
+  const todoTasksList = useMemo(() => {
+    return filteredTasksList
+      ? filteredTasksList.filter((task) => task && task.status === 'todo')
+      : [];
+  }, [filteredTasksList]);
 
   const [everCreatedTaskTitles, setEverCreatedTaskTitles] =
     useLocalStorageState({
@@ -284,7 +289,7 @@ export default function Panel({
                 />
               )}
             />
-            <button hidden={!isMobile} type="submit">
+            <button hidden={isChrome || isChromium} type="submit">
               ADD
             </button>
           </Box>
