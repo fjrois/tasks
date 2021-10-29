@@ -6,7 +6,7 @@ import Grid from '@mui/material/Grid';
 import TextField from '@mui/material/TextField';
 
 import ItemStack from './ItemStack.jsx';
-import useDatabaseState from '../hooks/useDatabaseState.js';
+// import useDatabaseState from '../hooks/useDatabaseState.js';
 import useLocalStorageState from '../hooks/useLocalStorageState.js'; // TODO: use this when no connectivity
 
 function calculateProgress({ doneTasksList, todoTasksList }) {
@@ -21,12 +21,13 @@ function calculateProgress({ doneTasksList, todoTasksList }) {
 }
 
 export default function Panel({
+  allowInput = true,
   createTask,
   data: { id: panelId, name: panelName },
   // database,
   deleteTask,
   moveTaskToPanel,
-  tasksList,
+  tasksList = [],
   updatePanelMetadata,
   updateTask,
   // user,
@@ -71,11 +72,15 @@ export default function Panel({
   //   defaultValue: initialTodoList,
   // });
   const doneTasksList = tasksList
-    ? tasksList.filter((task) => task.status === 'done')
+    ? tasksList.filter((task) => task && task.status === 'done')
     : [];
+  // const doneTasksList = tasksList.filter(
+  //   (task) => task && task.status === 'done'
+  // );
   const todoTasksList = tasksList
     ? tasksList.filter((task) => task.status === 'todo')
     : [];
+  // const todoTasksList = tasksList.filter((task) => task.status === 'todo');
 
   const [everCreatedTaskTitles, setEverCreatedTaskTitles] =
     useLocalStorageState({
@@ -215,6 +220,7 @@ export default function Panel({
         >
           <Autocomplete
             id="inputTaskTitle"
+            disabled={!allowInput}
             value={inputTaskTitle || ''}
             inputValue={inputTaskTitle || ''}
             onChange={(event, newValue) => {

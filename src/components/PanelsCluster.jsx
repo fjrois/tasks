@@ -23,6 +23,7 @@ export default function PanelsCluster({ database, user }) {
     dbPath: `panels/${user}`,
     // debounce: 400,
     defaultValue: [],
+    // defaultValue: [{ id: 'all', name: 'all' }],
   });
 
   const [selectedTab, setSelectedTab] = useLocalStorageState({
@@ -32,12 +33,22 @@ export default function PanelsCluster({ database, user }) {
 
   const selectedPanelId = panelsList ? panelsList[selectedTab]?.id : undefined;
   const dbPath = `/lists/${user}/${selectedPanelId}`;
+  // let dbPath;
+  // switch (selectedPanelId) {
+  //   case 'all':
+  //     dbPath = `/lists/${user}`;
+  //     break;
+  //   default:
+  //     dbPath = `/lists/${user}/${selectedPanelId}`;
+  // }
+  // console.log('dbPath:', dbPath);
   const [tasksList, setTasksList] = useDatabaseState({
     database,
     dbPath,
     // debounce: 200,
     defaultValue: [],
   });
+  // console.log('tasksList:', tasksList);
 
   // const [tasksList, setTasksList] = useState([]);
 
@@ -227,6 +238,13 @@ export default function PanelsCluster({ database, user }) {
     });
   }
 
+  // function objectToArray(obj) {
+  //   if (!obj) return [];
+  //   return Object.values(obj).reduce((previousValue, currentValue) => {
+  //     return [...previousValue, ...currentValue];
+  //   }, []);
+  // }
+
   return (
     <Container fixed maxWidth="sm">
       {/* <img src={logo} className="App-logo" alt="logo" /> */}
@@ -241,6 +259,7 @@ export default function PanelsCluster({ database, user }) {
         ? panelsList.map((panelData, index) =>
             selectedTab === index ? (
               <Panel
+                // allowInput={selectedPanelId !== 'all'}
                 createTask={createTask}
                 database={database}
                 data={panelData}
@@ -254,6 +273,13 @@ export default function PanelsCluster({ database, user }) {
                   })
                 }
                 tasksList={tasksList}
+                // tasksList={
+                //   selectedPanelId !== 'all'
+                //   tasksList
+                //   Array.isArray(tasksList)
+                //     ? tasksList
+                //     : objectToArray(tasksList)
+                // }
                 updatePanelMetadata={(updates) =>
                   updatePanelMetadata({
                     panelId: panelData.id,
