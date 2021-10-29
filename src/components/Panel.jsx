@@ -114,7 +114,7 @@ export default function Panel({
     id2: { name: '' },
     id3: { name: 'Epic React' },
   };
-  const [selectedTopicId, setSelectedTopicId] = useState('');
+  const [selectedTopicId, setSelectedTopicId] = useLocalStorageState('');
 
   useEffect(() => {
     const updatedProgress = calculateProgress({ doneTasksList, todoTasksList });
