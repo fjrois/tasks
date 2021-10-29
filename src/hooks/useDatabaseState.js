@@ -5,9 +5,9 @@ import { ref, onValue, update } from 'firebase/database';
 export default function useDatabaseState({
   database,
   dbPath,
-  defaultValue = {},
+  defaultValue = [],
 }) {
-  const [state, setState] = useState([]);
+  const [state, setState] = useState(defaultValue);
   //   () => {
   //   // console.log(`Restoring ${dbPath} from database`);
   //   // const dbRef = ref(getDatabase());
@@ -60,6 +60,7 @@ export default function useDatabaseState({
       console.log(`Updating ${dbPath}: ${JSON.stringify(updates)}`);
       update(ref(database), updates);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [database, state]);
 
   return [state, setState];
