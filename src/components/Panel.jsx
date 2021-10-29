@@ -249,7 +249,9 @@ export default function Panel({
                 setInputTaskTitle(newValue);
               }}
               onInputChange={(event, newValue) => {
-                setInputTaskTitle(newValue);
+                const updatedValue =
+                  newValue.length === 1 ? newValue.toUpperCase() : newValue;
+                setInputTaskTitle(updatedValue);
               }}
               freeSolo
               disableClearable
