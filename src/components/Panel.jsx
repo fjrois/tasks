@@ -9,9 +9,17 @@ import IconButton from '@mui/material/IconButton';
 import TextField from '@mui/material/TextField';
 
 import ItemStack from './ItemStack.jsx';
-import TopicSelector from './TopicSelector.jsx';
+import InputTopicSelector from './InputTopicSelector.jsx';
 // import useDatabaseState from '../hooks/useDatabaseState.js';
 import useLocalStorageState from '../hooks/useLocalStorageState.js'; // TODO: use this when no connectivity
+
+import TopicsView from './TopicFilter.jsx';
+
+const topics = {
+  id1: { name: 'Tasks' },
+  id2: { name: '' },
+  id3: { name: 'Epic React' },
+};
 
 function calculateProgress({ doneTasksList, todoTasksList }) {
   if (!todoTasksList.length) return 100;
@@ -75,30 +83,27 @@ export default function Panel({
   //   // debounce: 200,
   //   defaultValue: initialTodoList,
   // });
-  // const doneTasksList = tasksList
-  //   ? tasksList.filter((task) => task && task.status === 'done')
-  //   : [];
-  const doneTasksList = useMemo(
-    () =>
-      tasksList
-        ? tasksList.filter((task) => task && task.status === 'done')
-        : [],
-    [tasksList]
+  const [selectedTopicIdFilter, setSelectedTopicIdFilter] =
+    useLocalStorageState({
+      defaultValue: null,
+      key: 'tasks:selected-topic-id-filter',
+    });
+  const selectedTopicFilter = topics[selectedTopicIdFilter];
+
+  const filteredTasksList = useMemo(() => {
+    return tasksList && selectedTopicFilter?.name
+      ? tasksList.filter(
+          (task) => task?.topic?.name === selectedTopicFilter.name
+        )
+      : tasksList;
+  }, [selectedTopicFilter, tasksList]);
+
+  const doneTasksList = filteredTasksList.filter(
+    (task) => task && task.status === 'done'
   );
-  // const doneTasksList = tasksList.filter(
-  //   (task) => task && task.status === 'done'
-  // );
-  // const todoTasksList = tasksList
-  //   ? tasksList.filter((task) => task.status === 'todo')
-  //   : [];
-  const todoTasksList = useMemo(
-    () =>
-      tasksList
-        ? tasksList.filter((task) => task && task.status === 'todo')
-        : [],
-    [tasksList]
+  const todoTasksList = filteredTasksList.filter(
+    (task) => task.status === 'todo'
   );
-  // const todoTasksList = tasksList.filter((task) => task.status === 'todo');
 
   const [everCreatedTaskTitles, setEverCreatedTaskTitles] =
     useLocalStorageState({
@@ -109,12 +114,10 @@ export default function Panel({
 
   const [progress, setProgress] = useState(0);
 
-  const topics = {
-    id1: { name: 'Tasks' },
-    id2: { name: '' },
-    id3: { name: 'Epic React' },
-  };
-  const [selectedTopicId, setSelectedTopicId] = useLocalStorageState('');
+  const [selectedInputTopicId, setSelectedInputTopicId] = useLocalStorageState({
+    defaultValue: '',
+    key: 'tasks:selected-input-topic-id',
+  });
 
   useEffect(() => {
     const updatedProgress = calculateProgress({ doneTasksList, todoTasksList });
@@ -218,7 +221,7 @@ export default function Panel({
             if (inputTaskTitle) {
               const taskCreated = createTask(
                 inputTaskTitle,
-                topics[selectedTopicId]
+                topics[selectedInputTopicId]
               );
               if (!everCreatedTaskTitles.includes(inputTaskTitle)) {
                 setEverCreatedTaskTitles((everCreatedTaskTitles) => {
@@ -234,9 +237,9 @@ export default function Panel({
           }}
         >
           <Box display="flex" gap="10px">
-            <TopicSelector
-              selectedTopicId={selectedTopicId}
-              setSelectedTopicId={setSelectedTopicId}
+            <InputTopicSelector
+              selectedTopicId={selectedInputTopicId}
+              setSelectedTopicId={setSelectedInputTopicId}
               topics={topics}
             />
             <Autocomplete
@@ -286,6 +289,13 @@ export default function Panel({
             </button>
           </Box>
         </form>
+        <Box marginTop="10px">
+          <TopicsView
+            selectedTopicId={selectedTopicIdFilter}
+            setSelectedTopicId={setSelectedTopicIdFilter}
+            topics={topics}
+          />
+        </Box>
       </Box>
 
       <div>
