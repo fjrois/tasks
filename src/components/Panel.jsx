@@ -232,7 +232,7 @@ export default function Panel({
             }
           }}
         >
-          <Box display="flex" gap="10px">
+          <span display="flex" gap="10px">
             <TopicSelector
               selectedTopicId={selectedTopicId}
               setSelectedTopicId={setSelectedTopicId}
@@ -278,8 +278,8 @@ export default function Panel({
                 />
               )}
             />
-            <button hidden type="submit" />
-          </Box>
+            <button hidden type="submit"></button>
+          </span>
         </form>
       </Box>
 
