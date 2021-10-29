@@ -2,7 +2,9 @@ import React, { useEffect, useMemo, useState } from 'react';
 
 import Autocomplete from '@mui/material/Autocomplete';
 import Box from '@mui/material/Box';
+import ClearIcon from '@mui/icons-material/Clear';
 import Grid from '@mui/material/Grid';
+import IconButton from '@mui/material/IconButton';
 import TextField from '@mui/material/TextField';
 
 import ItemStack from './ItemStack.jsx';
@@ -256,6 +258,18 @@ export default function Panel({
                 //       ...params.InputProps,
                 //       type: 'search',
                 //     }}
+                InputProps={{
+                  endAdornment: inputTaskTitle ? (
+                    <IconButton
+                      size="small"
+                      onClick={() => {
+                        setInputTaskTitle('');
+                      }}
+                    >
+                      <ClearIcon fontSize="10" />
+                    </IconButton>
+                  ) : null,
+                }}
               />
             )}
           />
