@@ -1,8 +1,10 @@
-import { isChrome, isChromium } from 'react-device-detect';
+// import { isChrome, isChromium } from 'react-device-detect';
 import React, { useEffect, useMemo, useState } from 'react';
 
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import Autocomplete from '@mui/material/Autocomplete';
 import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
 import ClearIcon from '@mui/icons-material/Clear';
 import Grid from '@mui/material/Grid';
 import IconButton from '@mui/material/IconButton';
@@ -289,9 +291,15 @@ export default function Panel({
                 />
               )}
             />
-            <button hidden={isChrome || isChromium} type="submit">
-              ADD
-            </button>
+            <Button
+              sx={{ borderColor: 'rgb(196,196,196)' }}
+              borderColor="secondary"
+              size="small"
+              variant="outlined"
+              type="submit"
+            >
+              <ArrowForwardIcon color="action" fontSize="small" />
+            </Button>
           </Box>
         </form>
         <Box marginTop="10px">
