@@ -93,6 +93,12 @@ export default function Panel({
   //   // debounce: 200,
   //   defaultValue: initialTodoList,
   // });
+  const [stacksCount, setStacksCount] = useLocalStorageState({
+    defaultValue: 2,
+    key: 'tasks:stacks-count',
+  });
+  const showDoingStack = stacksCount === 3;
+
   const [selectedTopicFilterIndex, setSelectedTopicFilterIndex] =
     useLocalStorageState({
       defaultValue: null,
@@ -116,9 +122,13 @@ export default function Panel({
 
   const todoTasksList = useMemo(() => {
     return filteredTasksList
-      ? filteredTasksList.filter((task) => task && task.status === 'todo')
+      ? filteredTasksList.filter(
+          (task) =>
+            (task && task.status === 'todo') ||
+            (!showDoingStack && task.status === 'doing')
+        )
       : [];
-  }, [filteredTasksList]);
+  }, [filteredTasksList, showDoingStack]);
 
   const doingTasksList = useMemo(() => {
     return filteredTasksList
@@ -142,12 +152,6 @@ export default function Panel({
   const selectedInputTopic = topics
     ? topics.find((topic) => topic.id === selectedInputTopicId)
     : null;
-
-  const [stacksCount, setStacksCount] = useLocalStorageState({
-    defaultValue: 2,
-    key: 'tasks:stacks-count',
-  });
-  const showDoingStack = stacksCount === 3;
 
   useEffect(() => {
     const updatedProgress = calculateProgress({ doneTasksList, todoTasksList });
