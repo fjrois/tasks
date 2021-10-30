@@ -21,7 +21,11 @@ export default function TopicFilter({
         <ToggleButton
           key={topicId}
           size="small"
-          sx={{ minWidth: '45px' }}
+          sx={{
+            borderColor: 'rgb(196,196,196)',
+            color: 'rgb(102,102,102)',
+            minWidth: '45px',
+          }}
           disableRipple
           value={topicId}
           aria-label="list"
