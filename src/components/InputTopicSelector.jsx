@@ -9,7 +9,7 @@ export default function TopicSelector({
   topics,
 }) {
   return (
-    <FormControl size="small" sx={{ m: 0, minWidth: 85 }}>
+    <FormControl size="small" sx={{ m: 0, minWidth: 95 }}>
       <InputLabel>Topic</InputLabel>
       <Select
         sx={{ m: 0 }}
