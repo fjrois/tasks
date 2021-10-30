@@ -16,6 +16,7 @@ import InputTopicSelector from './InputTopicSelector.jsx';
 import TopicsFilter from './TopicFilter.jsx';
 import useDatabaseState from '../hooks/useDatabaseState.js';
 import useLocalStorageState from '../hooks/useLocalStorageState.js'; // TODO: use this when no connectivity
+import ViewSelector from './ViewSelector.jsx';
 
 function calculateProgress({ doneTasksList, todoTasksList }) {
   if (!todoTasksList.length) return 100;
@@ -119,6 +120,12 @@ export default function Panel({
       : [];
   }, [filteredTasksList]);
 
+  const doingTasksList = useMemo(() => {
+    return filteredTasksList
+      ? filteredTasksList.filter((task) => task && task.status === 'doing')
+      : [];
+  }, [filteredTasksList]);
+
   const [everCreatedTaskTitles, setEverCreatedTaskTitles] =
     useLocalStorageState({
       debounce: true,
@@ -135,6 +142,12 @@ export default function Panel({
   const selectedInputTopic = topics
     ? topics.find((topic) => topic.id === selectedInputTopicId)
     : null;
+
+  const [stacksCount, setStacksCount] = useLocalStorageState({
+    defaultValue: 2,
+    key: 'tasks:stacks-count',
+  });
+  const showDoingStack = stacksCount === 3;
 
   useEffect(() => {
     const updatedProgress = calculateProgress({ doneTasksList, todoTasksList });
@@ -400,14 +413,22 @@ export default function Panel({
             </form>
           </Box>
         </Box>
+        <Box marginTop="10px">
+          <ViewSelector
+            setStacksCount={setStacksCount}
+            stacksCount={stacksCount}
+          />
+        </Box>
       </Box>
 
       <div>
         <Grid sx={{ flexGrow: 1 }} container spacing={2}>
-          <Grid item xs={6}>
+          <Grid item xs={showDoingStack ? 4 : 6}>
             <ItemStack
               handleItemClick={(taskToUpdate) =>
-                updateTask(taskToUpdate, { status: 'done' })
+                updateTask(taskToUpdate, {
+                  status: showDoingStack ? 'doing' : 'done',
+                })
               }
               handleItemMiddleClick={deleteTask}
               list={todoTasksList}
@@ -415,7 +436,20 @@ export default function Panel({
               type="todo"
             />
           </Grid>
-          <Grid item xs={6}>
+          {showDoingStack ? (
+            <Grid item xs={4}>
+              <ItemStack
+                handleItemClick={(taskToUpdate) =>
+                  updateTask(taskToUpdate, { status: 'done' })
+                }
+                handleItemMiddleClick={deleteTask}
+                list={doingTasksList}
+                moveTaskToPanel={moveTaskToPanel}
+                type="doing"
+              />
+            </Grid>
+          ) : null}
+          <Grid item xs={showDoingStack ? 4 : 6}>
             <ItemStack
               handleItemClick={(taskToUpdate) =>
                 updateTask(taskToUpdate, { status: 'todo' })
