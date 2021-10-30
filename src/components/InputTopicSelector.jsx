@@ -20,11 +20,13 @@ export default function TopicSelector({
         <MenuItem value="">
           <em>None</em>
         </MenuItem>
-        {Object.keys(topics).map((topicId) => (
-          <MenuItem key={topicId} value={topicId}>
-            {topics[topicId].name}
-          </MenuItem>
-        ))}
+        {topics
+          ? topics.map((topic) => (
+              <MenuItem key={topic.id} value={topic.id}>
+                {topic.name}
+              </MenuItem>
+            ))
+          : null}
       </Select>
     </FormControl>
   );
