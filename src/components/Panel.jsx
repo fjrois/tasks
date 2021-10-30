@@ -1,5 +1,6 @@
 // import { isChrome, isChromium } from 'react-device-detect';
 import React, { useEffect, useMemo, useState } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import Autocomplete from '@mui/material/Autocomplete';
@@ -12,16 +13,9 @@ import TextField from '@mui/material/TextField';
 
 import ItemStack from './ItemStack.jsx';
 import InputTopicSelector from './InputTopicSelector.jsx';
-// import useDatabaseState from '../hooks/useDatabaseState.js';
+import TopicsFilter from './TopicFilter.jsx';
+import useDatabaseState from '../hooks/useDatabaseState.js';
 import useLocalStorageState from '../hooks/useLocalStorageState.js'; // TODO: use this when no connectivity
-
-import TopicsView from './TopicFilter.jsx';
-
-const topics = {
-  id1: { name: 'Tasks' },
-  id2: { name: '' },
-  id3: { name: 'Epic React' },
-};
 
 function calculateProgress({ doneTasksList, todoTasksList }) {
   if (!todoTasksList.length) return 100;
@@ -38,18 +32,31 @@ export default function Panel({
   allowInput = true,
   createTask,
   data: { id: panelId, name: panelName },
-  // database,
+  database,
   deleteTask,
   moveTaskToPanel,
   tasksList = [],
   updatePanelMetadata,
   updateTask,
-  // user,
+  user,
 }) {
   const [inputTaskTitle, setInputTaskTitle] = useLocalStorageState({
     debounce: true,
     defaultValue: '',
-    key: 'inputTaskTitle',
+    key: 'tasks:input-task-title',
+  });
+
+  const [inputTopicName, setInputTopicName] = useLocalStorageState({
+    debounce: true,
+    defaultValue: '',
+    key: 'tasks:input-topic-name',
+  });
+
+  const [topics, setTopics] = useDatabaseState({
+    database,
+    dbPath: `topics/${user}`,
+    // debounce: 400,
+    defaultValue: [],
   });
 
   // const [doneList, setDoneList] = useState(initialDoneList);
@@ -85,12 +92,12 @@ export default function Panel({
   //   // debounce: 200,
   //   defaultValue: initialTodoList,
   // });
-  const [selectedTopicIdFilter, setSelectedTopicIdFilter] =
+  const [selectedTopicFilterIndex, setSelectedTopicFilterIndex] =
     useLocalStorageState({
       defaultValue: null,
       key: 'tasks:selected-topic-id-filter',
     });
-  const selectedTopicFilter = topics[selectedTopicIdFilter];
+  const selectedTopicFilter = topics ? topics[selectedTopicFilterIndex] : null;
 
   const filteredTasksList = useMemo(() => {
     return tasksList && selectedTopicFilter?.name
@@ -125,6 +132,9 @@ export default function Panel({
     defaultValue: '',
     key: 'tasks:selected-input-topic-id',
   });
+  const selectedInputTopic = topics
+    ? topics.find((topic) => topic.id === selectedInputTopicId)
+    : null;
 
   useEffect(() => {
     const updatedProgress = calculateProgress({ doneTasksList, todoTasksList });
@@ -135,6 +145,45 @@ export default function Panel({
     updatePanelMetadata({ progress });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [progress]);
+
+  function createTopic(topicName) {
+    console.log('topicName:', topicName);
+    if (!topicName) return;
+    if (!topics || !topics.find((topic) => topic.name === topicName)) {
+      setTopics((topics) => {
+        console.log(`Creating topic with name ${topicName}`);
+        const newTopicData = {
+          dateCreated: Date.now(),
+          id: `topic-${uuidv4()}`,
+          name: topicName,
+        };
+        const updatedTopics = topics ? [...topics] : [];
+        updatedTopics.push(newTopicData);
+        return updatedTopics;
+      });
+      return true;
+    }
+  }
+
+  function deleteTopic(topicToDelete) {
+    if (!topicToDelete) return;
+    if (
+      window.confirm(
+        `Are you sure that you want to delete the topic ${topicToDelete.name}?`
+      )
+    ) {
+      setTopics((topics) => {
+        if (topics) {
+          console.log(`Deleting topic ${topicToDelete.name}`);
+          const updatedTopics = topics.filter(
+            (topic) => topic.id !== topicToDelete.id
+          );
+          return updatedTopics;
+        }
+      });
+      return true;
+    }
+  }
 
   // function createTask(taskTitle) {
   //   const foundTask = findTaskTitle(taskTitle);
@@ -228,7 +277,7 @@ export default function Panel({
             if (inputTaskTitle) {
               const taskCreated = createTask(
                 inputTaskTitle,
-                topics[selectedInputTopicId]
+                selectedInputTopic
               );
               if (!everCreatedTaskTitles.includes(inputTaskTitle)) {
                 setEverCreatedTaskTitles((everCreatedTaskTitles) => {
@@ -292,8 +341,11 @@ export default function Panel({
               )}
             />
             <Button
-              sx={{ borderColor: 'rgb(196,196,196)' }}
-              borderColor="secondary"
+              sx={{
+                borderColor: 'rgb(196,196,196)',
+                width: '13.8%',
+                minWidth: '40px',
+              }}
               size="small"
               variant="outlined"
               type="submit"
@@ -302,12 +354,51 @@ export default function Panel({
             </Button>
           </Box>
         </form>
-        <Box marginTop="10px">
-          <TopicsView
-            selectedTopicId={selectedTopicIdFilter}
-            setSelectedTopicId={setSelectedTopicIdFilter}
+        <Box
+          marginTop="10px"
+          sx={{
+            display: 'flex',
+            flexFlow: 'row wrap',
+            justifyContent: 'space-between',
+            gap: '10px',
+          }}
+        >
+          <TopicsFilter
+            deleteTopic={deleteTopic}
+            selectedTopicId={selectedTopicFilterIndex}
+            setSelectedTopicIndex={setSelectedTopicFilterIndex}
             topics={topics}
           />
+          <Box
+            sx={{
+              width: '22.9%',
+            }}
+          >
+            <form
+              onSubmit={(event) => {
+                event.preventDefault();
+                const topicName = event.target.topicName.value;
+                const creationStarted = createTopic(topicName);
+                if (creationStarted) {
+                  setInputTopicName('');
+                }
+              }}
+            >
+              <TextField
+                name="topicName"
+                onChange={(event) => {
+                  let value = event.target.value;
+                  if (value.length === 1) {
+                    value = value.toUpperCase();
+                  }
+                  setInputTopicName(value);
+                }}
+                label="Add Topic"
+                size="small"
+                value={inputTopicName}
+              />
+            </form>
+          </Box>
         </Box>
       </Box>
 
