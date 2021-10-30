@@ -31,6 +31,8 @@ export default function PanelTabs({
             {panelsList.map((panel) => {
               return (
                 <Tab
+                  disableRipple
+                  // disableFocusRipple
                   key={panel.name}
                   onMouseDown={(event) => {
                     if (
