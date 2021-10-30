@@ -376,12 +376,18 @@ export default function Panel({
             gap: '10px',
           }}
         >
-          <TopicsFilter
-            deleteTopic={deleteTopic}
-            selectedTopicId={selectedTopicFilterIndex}
-            setSelectedTopicIndex={setSelectedTopicFilterIndex}
-            topics={topics}
-          />
+          <Box display="flex">
+            <ViewSelector
+              setStacksCount={setStacksCount}
+              stacksCount={stacksCount}
+            />
+            <TopicsFilter
+              deleteTopic={deleteTopic}
+              selectedTopicId={selectedTopicFilterIndex}
+              setSelectedTopicIndex={setSelectedTopicFilterIndex}
+              topics={topics}
+            />
+          </Box>
           <Box
             sx={{
               width: '22.9%',
@@ -412,12 +418,6 @@ export default function Panel({
               />
             </form>
           </Box>
-        </Box>
-        <Box marginTop="10px">
-          <ViewSelector
-            setStacksCount={setStacksCount}
-            stacksCount={stacksCount}
-          />
         </Box>
       </Box>
 
