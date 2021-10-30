@@ -9,6 +9,7 @@ import ListItem from './ListItem';
 const colors = {
   green: '#91ff9a',
   yellow: '#ffff8a',
+  orange: '#ffed7a',
 };
 
 export default function ItemStack({
@@ -28,6 +29,9 @@ export default function ItemStack({
   } else if (listType === 'todo') {
     itemBackgroundColor = colors.yellow;
     title = 'To do';
+  } else if (listType === 'doing') {
+    itemBackgroundColor = colors.orange;
+    title = 'Doing';
   }
 
   // const loadedListRef = useRef(list.length === 0 ? [] : [list[0]]);
