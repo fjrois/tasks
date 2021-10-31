@@ -8,6 +8,9 @@ const config = {
     appId: '1:979516677467:web:fd282e8de7d88f98d18e7e',
     measurementId: 'G-NE37LF7LZ6',
   },
+  login: {
+    redirectUrl: process.env.REACT_APP_LOGIN_REDIRECT_URL,
+  },
 };
 
 export default config;
