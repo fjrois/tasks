@@ -31,7 +31,7 @@ export default function PanelTabs({
             {panelsList.map((panel) => {
               return (
                 <Tab
-                  disableRipple
+                  // disableRipple
                   // disableFocusRipple
                   key={panel.name}
                   onMouseDown={(event) => {
@@ -47,16 +47,18 @@ export default function PanelTabs({
                   }}
                   label={
                     <Box
-                      sx={{
-                        // display: 'flex',
-                        // flexWrap: 'wrap',
-                        // '& > :not(style)': {
-                        // m: 1,
-                        // width: 128,
-                        // height: 100,
-                        // },
-                        marginTop: '2px',
-                      }}
+                      sx={
+                        {
+                          // display: 'flex',
+                          // flexWrap: 'wrap',
+                          // '& > :not(style)': {
+                          // m: 1,
+                          // width: 128,
+                          // height: 100,
+                          // },
+                          // marginTop: '2px',
+                        }
+                      }
                     >
                       <Box>{panel.name}</Box>
                       <Box>
@@ -77,7 +79,9 @@ export default function PanelTabs({
         <Grid item xs={3}>
           <Box
             sx={{
-              marginTop: '10px',
+              // paddingTop: '10px',
+              marginTop: '8px',
+              // backgroundColor: 'purple',
               // display: 'flex',
               // justifyContent: 'right',
               // alignContent: 'right',
@@ -86,8 +90,9 @@ export default function PanelTabs({
             <form
               onSubmit={(event) => {
                 event.preventDefault();
-                const newPanelMetadata = createPanel(newPanelName);
-                if (newPanelMetadata) {
+                const newPanelIndex = createPanel(newPanelName);
+                if (newPanelIndex > -1) {
+                  setSelectedTab(newPanelIndex);
                   setNewPanelName('');
                 }
               }}
