@@ -1,27 +1,111 @@
 import { MemoryRouter as Router, Switch, Route } from 'react-router-dom';
-import React from 'react';
+import { useState } from 'react';
 import { initializeApp } from 'firebase/app';
 import { getDatabase } from 'firebase/database';
 // import { getAnalytics } from 'firebase/analytics';
+import {
+  getAuth,
+  isSignInWithEmailLink,
+  onAuthStateChanged,
+  sendSignInLinkToEmail,
+  signInWithEmailLink,
+  signOut,
+} from 'firebase/auth';
 // import icon from '../../assets/icon.svg';
 // import './App.global.css';
 // import logo from './logo.svg';
 
 import config from './config';
-import PanelsCluster from './components/PanelsCluster.jsx';
+import MainView from './components/MainView.jsx';
 // Initialize Firebase
-const { firebase: firebaseConfig } = config;
+const {
+  firebase: firebaseConfig,
+  login: { redirectUrl: loginRedirectUrl },
+} = config;
 const firebaseApp = initializeApp(firebaseConfig);
 const database = getDatabase(firebaseApp);
 // const analytics = getAnalytics(firebaseApp);
 
-const user = 'user1'; // TODO: use localStorage if not user logged in
+const actionCodeSettings = {
+  handleCodeInApp: true,
+  url: loginRedirectUrl,
+};
+
+const auth = getAuth();
+
+if (isSignInWithEmailLink(auth, window.location.href)) {
+  let email = window.localStorage.getItem('tasks:email-for-signin');
+  if (!email) {
+    email = window.prompt('Please provide your email for confirmation');
+  }
+  signInWithEmailLink(auth, email, window.location.href)
+    .then((result) => {})
+    .catch((error) => {
+      // Some error occurred, you can inspect the code: error.code
+      // Common errors could be invalid email and invalid or expired OTPs.
+      console.log('error:', error);
+    });
+}
 
 export default function App() {
+  const [user, setUser] = useState(null);
+  const [loginEmailSent, setLoginEmailSent] = useState(null);
+  console.log('loginEmailSent:', loginEmailSent);
+
+  function login() {
+    const email = window.prompt('Please provide your email for confirmation');
+    sendSignInLinkToEmail(auth, email, actionCodeSettings)
+      .then(() => {
+        console.log(`Login email sent to ${email}`);
+        setLoginEmailSent(email);
+        window.localStorage.setItem('tasks:email-for-signin', email);
+      })
+      .catch((error) => {
+        setLoginEmailSent(null);
+        const errorCode = error.code;
+        const errorMessage = error.message;
+        console.log(`Error: ${errorCode} - ${errorMessage}`);
+      });
+  }
+
+  function logout() {
+    console.log(`Logging out`);
+    signOut(auth)
+      .then(() => {
+        window.localStorage.removeItem('tasks:email-for-signin');
+        console.log(`Successfully logged out`);
+      })
+      .catch((error) => {
+        console.log('error:', error);
+      });
+  }
+
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      // User is signed in
+      setUser(user);
+      setLoginEmailSent(null);
+    } else {
+      // User is signed out
+      setUser(null);
+    }
+  });
+
   return (
     <Router>
       <Switch>
-        <Route path="/" component={() => PanelsCluster({ database, user })} />
+        <Route
+          path="/"
+          component={() =>
+            MainView({
+              database,
+              login,
+              loginEmailSent,
+              logout,
+              user,
+            })
+          }
+        />
       </Switch>
     </Router>
   );
