@@ -1,6 +1,6 @@
 const config = {
   firebase: {
-    apiKey: process.env.FIREBASE_API_KEY,
+    apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
     authDomain: 'tasks-f3816.firebaseapp.com',
     projectId: 'tasks-f3816',
     storageBucket: 'tasks-f3816.appspot.com',
