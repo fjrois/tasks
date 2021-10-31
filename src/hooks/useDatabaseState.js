@@ -6,6 +6,7 @@ export default function useDatabaseState({
   database,
   dbPath,
   defaultValue = [],
+  skipDatabaseUse,
 }) {
   const [state, setState] = useState(defaultValue);
   //   () => {
@@ -30,6 +31,7 @@ export default function useDatabaseState({
   // });
 
   useEffect(() => {
+    if (skipDatabaseUse) return;
     if (!dbPath || dbPath.includes('undefined')) return;
     // Subscribe to db changes
     const stateRef = ref(database, dbPath);
@@ -52,6 +54,7 @@ export default function useDatabaseState({
   }, [dbPath]);
 
   useEffect(() => {
+    if (skipDatabaseUse) return;
     if (!state || dbPath.includes('undefined')) return;
     if (JSON.stringify(state) !== JSON.stringify(defaultValue)) {
       // Update db
