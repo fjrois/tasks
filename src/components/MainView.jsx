@@ -1,5 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
 import { ref, update } from 'firebase/database';
 
@@ -8,7 +10,13 @@ import PanelTabs from './PanelTabs.jsx';
 import useDatabaseState from '../hooks/useDatabaseState.js';
 import useLocalStorageState from '../hooks/useLocalStorageState.js'; // TODO: use this when no connectivity
 
-export default function PanelsCluster({ database, user }) {
+export default function MainView({
+  database,
+  login,
+  loginEmailSent,
+  logout,
+  user,
+}) {
   // const [panelsList, setPanelsList] = useLocalStorageState({
   //   debounce: 400,
   //   key: 'panelsList',
@@ -18,28 +26,30 @@ export default function PanelsCluster({ database, user }) {
   //     // { id: 'id3', name: 'Panel 3' },
   //   ],
   // });
-  const [panelsList, setPanelsList] = useDatabaseState({
-    database,
-    dbPath: `panels/${user}`,
-    // debounce: 400,
-    defaultValue: [],
-    // defaultValue: [{ id: 'all', name: 'all' }],
-  });
 
   const [selectedTab, setSelectedTab] = useLocalStorageState({
     defaultValue: 0,
     key: `tasks:selected-tab`,
   });
 
+  const [panelsList, setPanelsList] = useDatabaseState({
+    database,
+    dbPath: `panels/${user?.uid}`,
+    // debounce: 400,
+    defaultValue: [],
+    // defaultValue: [{ id: 'all', name: 'all' }],
+    skipDatabaseUse: !user,
+  });
+
   const selectedPanelId = panelsList ? panelsList[selectedTab]?.id : undefined;
-  const dbPath = `/lists/${user}/${selectedPanelId}`;
+  const dbPath = `/lists/${user?.uid}/${selectedPanelId}`;
   // let dbPath;
   // switch (selectedPanelId) {
   //   case 'all':
-  //     dbPath = `/lists/${user}`;
+  //     dbPath = `/lists/${user?.uid}`;
   //     break;
   //   default:
-  //     dbPath = `/lists/${user}/${selectedPanelId}`;
+  //     dbPath = `/lists/${user?.uid}/${selectedPanelId}`;
   // }
   // console.log('dbPath:', dbPath);
   const [tasksList, setTasksList] = useDatabaseState({
@@ -47,9 +57,8 @@ export default function PanelsCluster({ database, user }) {
     dbPath,
     // debounce: 200,
     defaultValue: [],
+    skipDatabaseUse: !user,
   });
-
-  // const [tasksList, setTasksList] = useState([]);
 
   // useEffect(() => {
   //   if (!dbPath || dbPath.includes('undefined')) return;
@@ -122,7 +131,8 @@ export default function PanelsCluster({ database, user }) {
       const newPanelMetadata = { id: `panel-${uuidv4()}`, name: panelName };
       updatedPanelsList.push(newPanelMetadata);
       setPanelsList(updatedPanelsList);
-      return newPanelMetadata;
+      const newPanelIndex = updatedPanelsList.length - 1;
+      return newPanelIndex;
     }
   }
 
@@ -154,7 +164,7 @@ export default function PanelsCluster({ database, user }) {
     const targetPanel = panelsList[targetPanelIndex];
     const tasksTarget = []; // TODO: fetch real values
     const updatedTasksTarget = [...tasksTarget, task];
-    const dbPathTarget = `lists/${user}/${targetPanel.id}`;
+    const dbPathTarget = `lists/${user?.uid}/${targetPanel.id}`;
 
     //Update origin panel tasks
     const originPanel = panelsList[originPanelIndex];
@@ -162,7 +172,7 @@ export default function PanelsCluster({ database, user }) {
     const updatedTasksOrigin = tasksOrigin.filter(
       (originTask) => originTask.id !== task.id
     );
-    const dbPathOrigin = `lists/${user}/${originPanel.id}`;
+    const dbPathOrigin = `lists/${user?.uid}/${originPanel.id}`;
 
     const updates = {};
     updates[dbPathTarget] = updatedTasksTarget;
@@ -253,57 +263,83 @@ export default function PanelsCluster({ database, user }) {
   return (
     <Container fixed maxWidth="sm">
       {/* <img src={logo} className="App-logo" alt="logo" /> */}
-      <PanelTabs
-        createPanel={createPanel}
-        deletePanel={deletePanel}
-        panelsList={panelsList || []}
-        selectedTab={selectedTab}
-        setSelectedTab={setSelectedTab}
-      />
-      {panelsList
-        ? panelsList.map((panelData, index) =>
-            selectedTab === index ? (
-              <Panel
-                // allowInput={selectedPanelId !== 'all'}
-                createTask={createTask}
-                database={database}
-                data={panelData}
-                deleteTask={deleteTask}
-                key={panelData.id}
-                moveTaskToPanel={(task) =>
-                  moveTaskToPanel({
-                    task,
-                    originPanelIndex: index,
-                    targetPanelIndex: index + 1,
-                  })
-                }
-                tasksList={
-                  tasksList
-                    ? [...tasksList].sort(
-                        (task1, task2) =>
-                          task1.dateModified - task2.dateModified
-                      )
-                    : null
-                }
-                // tasksList={
-                //   selectedPanelId !== 'all'
-                //   tasksList
-                //   Array.isArray(tasksList)
-                //     ? tasksList
-                //     : objectToArray(tasksList)
-                // }
-                updatePanelMetadata={(updates) =>
-                  updatePanelMetadata({
-                    panelId: panelData.id,
-                    updates,
-                  })
-                }
-                updateTask={updateTask}
-                user={user}
-              />
-            ) : null
-          )
-        : null}
+      <Box display="flex" justifyContent="right">
+        <Box
+          color="rgb(102,102,102)"
+          fontSize="15px"
+          marginTop="4px"
+          marginRight="4px"
+        >
+          {user
+            ? `Logged in as ${user?.email}`
+            : loginEmailSent
+            ? `Login email sent to ${loginEmailSent}`
+            : `Log in to save your data`}
+        </Box>
+        {user ? (
+          <Button onClick={logout} size="small">
+            Logout
+          </Button>
+        ) : (
+          <Button onClick={login} size="small">
+            Login
+          </Button>
+        )}
+      </Box>
+      <>
+        <PanelTabs
+          createPanel={createPanel}
+          deletePanel={deletePanel}
+          panelsList={panelsList || []}
+          selectedTab={selectedTab}
+          setSelectedTab={setSelectedTab}
+        />
+        {panelsList
+          ? panelsList.map((panelData, index) =>
+              selectedTab === index ? (
+                <Panel
+                  // allowInput={selectedPanelId !== 'all'}
+                  createTask={createTask}
+                  database={database}
+                  data={panelData}
+                  deleteTask={deleteTask}
+                  key={panelData.id}
+                  moveTaskToPanel={(task) =>
+                    moveTaskToPanel({
+                      task,
+                      originPanelIndex: index,
+                      targetPanelIndex: index + 1,
+                    })
+                  }
+                  tasksList={
+                    tasksList
+                      ? [...tasksList].sort(
+                          (task1, task2) =>
+                            task1.dateModified - task2.dateModified
+                        )
+                      : null
+                  }
+                  // tasksList={
+                  //   selectedPanelId !== 'all'
+                  //   tasksList
+                  //   Array.isArray(tasksList)
+                  //     ? tasksList
+                  //     : objectToArray(tasksList)
+                  // }
+                  updatePanelMetadata={(updates) =>
+                    updatePanelMetadata({
+                      panelId: panelData.id,
+                      updates,
+                    })
+                  }
+                  updateTask={updateTask}
+                  userId={user?.uid}
+                />
+              ) : null
+            )
+          : null}
+      </>
+      {/* ) : null} */}
     </Container>
   );
 }
