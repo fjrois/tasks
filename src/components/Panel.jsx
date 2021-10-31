@@ -39,7 +39,7 @@ export default function Panel({
   tasksList = [],
   updatePanelMetadata,
   updateTask,
-  user,
+  userId,
 }) {
   const [inputTaskTitle, setInputTaskTitle] = useLocalStorageState({
     debounce: true,
@@ -55,9 +55,10 @@ export default function Panel({
 
   const [topics, setTopics] = useDatabaseState({
     database,
-    dbPath: `topics/${user}`,
+    dbPath: `topics/${userId}`,
     // debounce: 400,
     defaultValue: [],
+    skipDatabaseUse: !userId,
   });
 
   // const [doneList, setDoneList] = useState(initialDoneList);
@@ -76,20 +77,20 @@ export default function Panel({
 
   // const [tasksList, setTasksList] = useDatabaseState({
   //   database,
-  //   dbPath: `/lists/${user}/${panelId}`,
+  //   dbPath: `/lists/${userId}/${panelId}`,
   //   // debounce: 200,
   //   defaultValue: initialTasksList,
   // });
 
   // const [doneList, setDoneList] = useDatabaseState({
   //   database,
-  //   dbPath: `/lists/${user}/${panelId}/done`,
+  //   dbPath: `/lists/${userId}/${panelId}/done`,
   //   // debounce: 200,
   //   defaultValue: initialDoneList,
   // });
   // const [todoList, setTodoList] = useDatabaseState({
   //   database,
-  //   dbPath: `/lists/${user}/${panelId}/todo`,
+  //   dbPath: `/lists/${userId}/${panelId}/todo`,
   //   // debounce: 200,
   //   defaultValue: initialTodoList,
   // });
@@ -287,7 +288,7 @@ export default function Panel({
           },
         }}
       > */}
-      <Box paddingTop="15px" paddingBottom="7px">
+      <Box paddingTop="10px" paddingBottom="10px">
         <form
           onSubmit={(event) => {
             event.preventDefault();
