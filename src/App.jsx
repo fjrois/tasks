@@ -72,7 +72,8 @@ export default function App() {
   }
 
   useEffect(() => {
-    const devUser = JSON.parse(process.env.REACT_APP_DEV_USER);
+    const devUserEnvVar = process.env.REACT_APP_DEV_USER;
+    const devUser = devUserEnvVar ? JSON.parse(devUserEnvVar) : null;
     if (devUser) {
       setUser(devUser);
     } else {
