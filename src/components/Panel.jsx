@@ -101,6 +101,12 @@ export default function Panel({
     });
   const selectedTopicFilter = topics ? topics[selectedTopicFilterIndex] : null;
 
+  useEffect(() => {
+    if (selectedTopicFilter?.id) {
+      setSelectedInputTopicId(selectedTopicFilter.id);
+    }
+  }, [selectedTopicFilter]);
+
   const filteredTasksList = useMemo(() => {
     return tasksList && selectedTopicFilter?.name
       ? tasksList.filter(
@@ -382,8 +388,8 @@ export default function Panel({
             />
             <TopicsFilter
               deleteTopic={deleteTopic}
-              selectedTopicId={selectedTopicFilterIndex}
-              setSelectedTopicIndex={setSelectedTopicFilterIndex}
+              selectedTopicFilterIndex={selectedTopicFilterIndex}
+              setSelectedTopicFilterIndex={setSelectedTopicFilterIndex}
               topics={topics}
             />
           </Box>
