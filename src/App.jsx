@@ -1,5 +1,5 @@
 import { MemoryRouter as Router, Switch, Route } from 'react-router-dom';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { initializeApp } from 'firebase/app';
 import { getDatabase } from 'firebase/database';
 // import { getAnalytics } from 'firebase/analytics';
@@ -33,24 +33,9 @@ const actionCodeSettings = {
 
 const auth = getAuth();
 
-if (isSignInWithEmailLink(auth, window.location.href)) {
-  let email = window.localStorage.getItem('tasks:email-for-signin');
-  if (!email) {
-    email = window.prompt('Please provide your email for confirmation');
-  }
-  signInWithEmailLink(auth, email, window.location.href)
-    .then((result) => {})
-    .catch((error) => {
-      // Some error occurred, you can inspect the code: error.code
-      // Common errors could be invalid email and invalid or expired OTPs.
-      console.log('error:', error);
-    });
-}
-
 export default function App() {
   const [user, setUser] = useState(null);
   const [loginEmailSent, setLoginEmailSent] = useState(null);
-  console.log('loginEmailSent:', loginEmailSent);
 
   function login() {
     const email = window.prompt('Please provide your email for confirmation');
@@ -73,6 +58,7 @@ export default function App() {
     signOut(auth)
       .then(() => {
         window.localStorage.removeItem('tasks:email-for-signin');
+        window.location.href = loginRedirectUrl;
         console.log(`Successfully logged out`);
       })
       .catch((error) => {
@@ -80,16 +66,34 @@ export default function App() {
       });
   }
 
-  onAuthStateChanged(auth, (user) => {
-    if (user) {
-      // User is signed in
-      setUser(user);
-      setLoginEmailSent(null);
-    } else {
-      // User is signed out
-      setUser(null);
+  useEffect(() => {
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        // User is signed in
+        setUser(user);
+        setLoginEmailSent(null);
+      } else {
+        // User is signed out
+        setUser(null);
+      }
+    });
+  }, []);
+
+  useEffect(() => {
+    if (isSignInWithEmailLink(auth, window.location.href)) {
+      let email = window.localStorage.getItem('tasks:email-for-signin');
+      if (!email) {
+        email = window.prompt('Please provide your email for confirmation');
+      }
+      signInWithEmailLink(auth, email, window.location.href)
+        .then((result) => {})
+        .catch((error) => {
+          // Some error occurred, you can inspect the code: error.code
+          // Common errors could be invalid email and invalid or expired OTPs.
+          console.log('error:', error);
+        });
     }
-  });
+  }, []);
 
   return (
     <Router>
