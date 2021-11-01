@@ -3,8 +3,8 @@ import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 
 export default function TopicFilter({
   deleteTopic,
-  selectedTopicId,
-  setSelectedTopicIndex,
+  selectedTopicFilterIndex,
+  setSelectedTopicFilterIndex,
   topics,
 }) {
   return (
@@ -12,10 +12,10 @@ export default function TopicFilter({
       size="small"
       // orientation="vertical"
       orientation="horizontal"
-      value={selectedTopicId}
+      value={selectedTopicFilterIndex}
       exclusive
       onChange={(event, newValue) => {
-        setSelectedTopicIndex(newValue);
+        setSelectedTopicFilterIndex(newValue);
       }}
     >
       {topics
