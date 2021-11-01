@@ -126,7 +126,8 @@ export default function PanelTabs({
 }
 
 function getProgressColor(progress) {
-  if (!progress || progress < 60) return 'error';
-  if (progress < 85) return 'warning';
   return 'primary';
+  //   if (!progress || progress < 60) return 'error';
+  //   if (progress < 85) return 'warning';
+  //   return 'primary';
 }
