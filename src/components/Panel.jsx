@@ -102,9 +102,7 @@ export default function Panel({
   const selectedTopicFilter = topics ? topics[selectedTopicFilterIndex] : null;
 
   useEffect(() => {
-    if (selectedTopicFilter?.id) {
-      setSelectedInputTopicId(selectedTopicFilter.id);
-    }
+    setSelectedInputTopicId(selectedTopicFilter?.id || '');
   }, [selectedTopicFilter]);
 
   const filteredTasksList = useMemo(() => {
