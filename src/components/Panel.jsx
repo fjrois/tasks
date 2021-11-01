@@ -101,9 +101,17 @@ export default function Panel({
     });
   const selectedTopicFilter = topics ? topics[selectedTopicFilterIndex] : null;
 
+  const [selectedInputTopicId, setSelectedInputTopicId] = useLocalStorageState({
+    defaultValue: '',
+    key: 'tasks:selected-input-topic-id',
+  });
+  const selectedInputTopic = topics
+    ? topics.find((topic) => topic.id === selectedInputTopicId)
+    : null;
+
   useEffect(() => {
     setSelectedInputTopicId(selectedTopicFilter?.id || '');
-  }, [selectedTopicFilter]);
+  }, [selectedTopicFilter, setSelectedInputTopicId]);
 
   const filteredTasksList = useMemo(() => {
     return tasksList && selectedTopicFilter?.name
@@ -143,14 +151,6 @@ export default function Panel({
     });
 
   const [progress, setProgress] = useState(0);
-
-  const [selectedInputTopicId, setSelectedInputTopicId] = useLocalStorageState({
-    defaultValue: '',
-    key: 'tasks:selected-input-topic-id',
-  });
-  const selectedInputTopic = topics
-    ? topics.find((topic) => topic.id === selectedInputTopicId)
-    : null;
 
   useEffect(() => {
     const updatedProgress = calculateProgress({ doneTasksList, todoTasksList });
