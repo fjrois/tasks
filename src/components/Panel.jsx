@@ -14,7 +14,7 @@ import TextField from '@mui/material/TextField';
 import ItemStack from './ItemStack.jsx';
 import InputTopicSelector from './InputTopicSelector.jsx';
 import TopicsFilter from './TopicFilter.jsx';
-import useDatabaseState from '../hooks/useDatabaseState.js';
+// import useDatabaseState from '../hooks/useDatabaseState.js';
 import useLocalStorageState from '../hooks/useLocalStorageState.js'; // TODO: use this when no connectivity
 import ViewSelector from './ViewSelector.jsx';
 
@@ -36,7 +36,9 @@ export default function Panel({
   database,
   deleteTask,
   moveTaskToPanel,
+  setTopics,
   tasksList = [],
+  topics,
   updatePanelMetadata,
   updateTask,
   userId,
@@ -51,14 +53,6 @@ export default function Panel({
     debounce: true,
     defaultValue: '',
     key: 'tasks:input-topic-name',
-  });
-
-  const [topics, setTopics] = useDatabaseState({
-    database,
-    dbPath: `topics/${userId}`,
-    // debounce: 400,
-    defaultValue: [],
-    skipDatabaseUse: !userId,
   });
 
   // const [doneList, setDoneList] = useState(initialDoneList);
@@ -312,7 +306,7 @@ export default function Panel({
         >
           <Box display="flex" gap="10px">
             <InputTopicSelector
-              selectedTopicId={selectedInputTopicId}
+              selectedTopicId={selectedInputTopic ? selectedInputTopicId : ''}
               setSelectedTopicId={setSelectedInputTopicId}
               topics={topics}
             />
