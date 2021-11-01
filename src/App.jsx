@@ -36,21 +36,26 @@ const auth = getAuth();
 export default function App() {
   const [user, setUser] = useState(null);
   const [loginEmailSent, setLoginEmailSent] = useState(null);
-
   function login() {
-    const email = window.prompt('Please provide your email for confirmation');
-    sendSignInLinkToEmail(auth, email, actionCodeSettings)
-      .then(() => {
-        console.log(`Login email sent to ${email}`);
-        setLoginEmailSent(email);
-        window.localStorage.setItem('tasks:email-for-signin', email);
-      })
-      .catch((error) => {
-        setLoginEmailSent(null);
-        const errorCode = error.code;
-        const errorMessage = error.message;
-        console.log(`Error: ${errorCode} - ${errorMessage}`);
-      });
+    const defaultEmail = window.localStorage.getItem('tasks:email-for-signin');
+    const email = window.prompt(
+      'Please provide your email for confirmation',
+      defaultEmail || ''
+    );
+    if (email) {
+      sendSignInLinkToEmail(auth, email, actionCodeSettings)
+        .then(() => {
+          console.log(`Login email sent to ${email}`);
+          setLoginEmailSent(email);
+          window.localStorage.setItem('tasks:email-for-signin', email);
+        })
+        .catch((error) => {
+          setLoginEmailSent(null);
+          const errorCode = error.code;
+          const errorMessage = error.message;
+          console.log(`Error: ${errorCode} - ${errorMessage}`);
+        });
+    }
   }
 
   function logout() {
@@ -67,16 +72,21 @@ export default function App() {
   }
 
   useEffect(() => {
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        // User is signed in
-        setUser(user);
-        setLoginEmailSent(null);
-      } else {
-        // User is signed out
-        setUser(null);
-      }
-    });
+    const devUser = JSON.parse(process.env.REACT_APP_DEV_USER);
+    if (devUser) {
+      setUser(devUser);
+    } else {
+      onAuthStateChanged(auth, (user) => {
+        if (user) {
+          // User is signed in
+          setUser(user);
+          setLoginEmailSent(null);
+        } else {
+          // User is signed out
+          setUser(null);
+        }
+      });
+    }
   }, []);
 
   useEffect(() => {
