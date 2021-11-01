@@ -67,7 +67,7 @@ export default function PanelTabs({
                           <Box>{panel.name}</Box>
                           <Box>
                             <LinearProgressWithLabel
-                              // color={color.yellow}
+                              color={getProgressColor(panel.progress)}
                               hidelabel={1}
                               size={'s'}
                               value={panel.progress || 0}
@@ -123,4 +123,10 @@ export default function PanelTabs({
       </Grid>
     </>
   );
+}
+
+function getProgressColor(progress) {
+  if (!progress || progress < 60) return 'error';
+  if (progress < 85) return 'warning';
+  return 'primary';
 }
