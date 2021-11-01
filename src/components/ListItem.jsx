@@ -19,6 +19,7 @@ export default function ListItem({
       sx={{
         backgroundColor,
         color: 'text.secondary',
+        cursor: 'pointer',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
