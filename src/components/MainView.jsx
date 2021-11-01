@@ -1,4 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
+import { useEffect } from 'react';
 
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -8,7 +9,7 @@ import { ref, update } from 'firebase/database';
 import Panel from './Panel.jsx';
 import PanelTabs from './PanelTabs.jsx';
 import useDatabaseState from '../hooks/useDatabaseState.js';
-import useLocalStorageState from '../hooks/useLocalStorageState.js'; // TODO: use this when no connectivity
+import useLocalStorageState from '../hooks/useLocalStorageState.js';
 
 export default function MainView({
   database,
@@ -32,17 +33,18 @@ export default function MainView({
     key: `tasks:selected-tab`,
   });
 
-  const [panelsList, setPanelsList] = useDatabaseState({
+  const [
+    [panelsList, setPanelsList],
+    [tasksList, setTasksList],
+    [topics, setTopics],
+  ] = useLists({
     database,
-    dbPath: `panels/${user?.uid}`,
-    // debounce: 400,
     defaultValue: [],
-    // defaultValue: [{ id: 'all', name: 'all' }],
-    skipDatabaseUse: !user,
+    selectedTab,
+    skippDatabaseUse: !user,
+    user,
   });
 
-  const selectedPanelId = panelsList ? panelsList[selectedTab]?.id : undefined;
-  const dbPath = `/lists/${user?.uid}/${selectedPanelId}`;
   // let dbPath;
   // switch (selectedPanelId) {
   //   case 'all':
@@ -52,13 +54,50 @@ export default function MainView({
   //     dbPath = `/lists/${user?.uid}/${selectedPanelId}`;
   // }
   // console.log('dbPath:', dbPath);
-  const [tasksList, setTasksList] = useDatabaseState({
-    database,
-    dbPath,
-    // debounce: 200,
-    defaultValue: [],
-    skipDatabaseUse: !user,
-  });
+
+  useEffect(() => {
+    if (!user) {
+      // Save anonymous user data in localStorage
+      if (panelsList?.length > 0) {
+        window.localStorage.setItem(
+          'tasks:anonymous-panels-list',
+          JSON.stringify(panelsList)
+        );
+      }
+      if (tasksList?.length > 0) {
+        window.localStorage.setItem(
+          'tasks:anonymous-tasks-list',
+          JSON.stringify(tasksList)
+        );
+      }
+      if (topics?.length > 0) {
+        window.localStorage.setItem(
+          'tasks:anonymous-topics',
+          JSON.stringify(topics)
+        );
+      }
+    }
+  }, [panelsList, tasksList, topics, user]);
+
+  useEffect(() => {
+    if (user) {
+      const isFirstTimeUserResult = isFirstTimeUser(user);
+      console.log('isFirstTimeUserResult:', isFirstTimeUserResult);
+      if (isFirstTimeUserResult) {
+        // Load user data that was previously anonymous
+        const { panelsList, tasksList, topics } =
+          getLocalStorageAnonymousLists();
+        if (panelsList) setPanelsList(panelsList);
+        if (tasksList) setTasksList(tasksList);
+        if (topics) setTopics(topics);
+      }
+    }
+    return () => {
+      if (user) {
+        clearLocalStorageAnonymousLists();
+      }
+    };
+  }, [setPanelsList, setTasksList, setTopics, user]);
 
   // useEffect(() => {
   //   if (!dbPath || dbPath.includes('undefined')) return;
@@ -281,65 +320,144 @@ export default function MainView({
             Logout
           </Button>
         ) : (
-          <Button onClick={login} size="small">
+          <Button
+            disabled={Boolean(loginEmailSent)}
+            onClick={() => {
+              const anonymousUserDataToSave = { panelsList, tasksList, topics };
+              login(anonymousUserDataToSave);
+            }}
+            size="small"
+          >
             Login
           </Button>
         )}
       </Box>
-      <>
-        <PanelTabs
-          createPanel={createPanel}
-          deletePanel={deletePanel}
-          panelsList={panelsList || []}
-          selectedTab={selectedTab}
-          setSelectedTab={setSelectedTab}
-        />
-        {panelsList
-          ? panelsList.map((panelData, index) =>
-              selectedTab === index ? (
-                <Panel
-                  // allowInput={selectedPanelId !== 'all'}
-                  createTask={createTask}
-                  database={database}
-                  data={panelData}
-                  deleteTask={deleteTask}
-                  key={panelData.id}
-                  moveTaskToPanel={(task) =>
-                    moveTaskToPanel({
-                      task,
-                      originPanelIndex: index,
-                      targetPanelIndex: index + 1,
-                    })
-                  }
-                  tasksList={
-                    tasksList
-                      ? [...tasksList].sort(
-                          (task1, task2) =>
-                            task1.dateModified - task2.dateModified
-                        )
-                      : null
-                  }
-                  // tasksList={
-                  //   selectedPanelId !== 'all'
-                  //   tasksList
-                  //   Array.isArray(tasksList)
-                  //     ? tasksList
-                  //     : objectToArray(tasksList)
-                  // }
-                  updatePanelMetadata={(updates) =>
-                    updatePanelMetadata({
-                      panelId: panelData.id,
-                      updates,
-                    })
-                  }
-                  updateTask={updateTask}
-                  userId={user?.uid}
-                />
-              ) : null
-            )
-          : null}
-      </>
+      {loginEmailSent ? null : (
+        <>
+          <PanelTabs
+            createPanel={createPanel}
+            deletePanel={deletePanel}
+            panelsList={panelsList || []}
+            selectedTab={selectedTab}
+            setSelectedTab={setSelectedTab}
+            userId={user?.uid}
+          />
+          {panelsList
+            ? panelsList.map((panelData, index) =>
+                selectedTab === index ? (
+                  <Panel
+                    // allowInput={selectedPanelId !== 'all'}
+                    createTask={createTask}
+                    database={database}
+                    data={panelData}
+                    deleteTask={deleteTask}
+                    key={panelData.id}
+                    moveTaskToPanel={(task) =>
+                      moveTaskToPanel({
+                        task,
+                        originPanelIndex: index,
+                        targetPanelIndex: index + 1,
+                      })
+                    }
+                    setTopics={setTopics}
+                    tasksList={
+                      tasksList
+                        ? [...tasksList].sort(
+                            (task1, task2) =>
+                              task1.dateModified - task2.dateModified
+                          )
+                        : null
+                    }
+                    // tasksList={
+                    //   selectedPanelId !== 'all'
+                    //   tasksList
+                    //   Array.isArray(tasksList)
+                    //     ? tasksList
+                    //     : objectToArray(tasksList)
+                    // }
+                    topics={topics}
+                    updatePanelMetadata={(updates) =>
+                      updatePanelMetadata({
+                        panelId: panelData.id,
+                        updates,
+                      })
+                    }
+                    updateTask={updateTask}
+                    userId={user?.uid}
+                  />
+                ) : null
+              )
+            : null}
+        </>
+      )}
       {/* ) : null} */}
     </Container>
   );
+}
+
+function useLists({
+  database,
+  defaultValue = [],
+  selectedTab,
+  skipDatabaseUse,
+  user,
+}) {
+  const [panelsList, setPanelsList] = useDatabaseState({
+    database,
+    dbPath: `panels/${user?.uid}`,
+    // debounce: 400,
+    defaultValue,
+    // defaultValue: [{ id: 'all', name: 'all' }],
+    skipDatabaseUse,
+  });
+
+  const selectedPanelId = panelsList ? panelsList[selectedTab]?.id : undefined;
+  const dbPath = `/lists/${user?.uid}/${selectedPanelId}`;
+  const [tasksList, setTasksList] = useDatabaseState({
+    database,
+    dbPath,
+    // debounce: 200,
+    defaultValue,
+    skipDatabaseUse,
+  });
+
+  const [topics, setTopics] = useDatabaseState({
+    database,
+    dbPath: `topics/${user?.uid}`,
+    // debounce: 400,
+    defaultValue,
+    skipDatabaseUse,
+  });
+
+  return [
+    [panelsList, setPanelsList],
+    [tasksList, setTasksList],
+    [topics, setTopics],
+  ];
+}
+
+function clearLocalStorageAnonymousLists() {
+  window.localStorage.removeItem('tasks:anonymous-panels-list');
+  window.localStorage.removeItem('tasks:anonymous-tasks-list');
+  window.localStorage.removeItem('tasks:anonymous-topics');
+}
+
+function getLocalStorageAnonymousLists() {
+  const panelsList = JSON.parse(
+    window.localStorage.getItem('tasks:anonymous-panels-list')
+  );
+  const tasksList = JSON.parse(
+    window.localStorage.getItem('tasks:anonymous-tasks-list')
+  );
+  const topics = JSON.parse(
+    window.localStorage.getItem('tasks:anonymous-topics')
+  );
+
+  return { panelsList, tasksList, topics };
+}
+
+function isFirstTimeUser(user) {
+  if (!user?.metadata) return false;
+  const { createdAt, lastLoginAt } = user.metadata;
+  return Math.abs(createdAt - lastLoginAt) < 120000;
 }
