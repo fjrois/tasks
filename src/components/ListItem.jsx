@@ -12,7 +12,7 @@ export default function ListItem({
   const [elevation, setElevation] = useState(defaultElevation);
   const higherElevation = 8;
 
-  let clickStartMs;
+  // let clickStartMs;
   return (
     <Paper
       // variant={'outlined'}
@@ -29,9 +29,9 @@ export default function ListItem({
       }}
       elevation={elevation}
       key={task.id}
-      onMouseDown={(event) => {
-        clickStartMs = Date.now();
-      }}
+      // onMouseDown={(event) => {
+      //   clickStartMs = Date.now();
+      // }}
       onMouseUp={(event) => {
         // const clickTimeMs = Date.now() - clickStartMs;
         // if (clickTimeMs > 600) {
