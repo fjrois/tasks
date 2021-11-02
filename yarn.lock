@@ -2100,6 +2100,11 @@
     estree-walker "^1.0.1"
     picomatch "^2.2.2"
 
+"@sandstreamdev/react-swipeable-list@^1.0.1":
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/@sandstreamdev/react-swipeable-list/-/react-swipeable-list-1.0.1.tgz#054055d2e0168793db07df37716f324a59132d50"
+  integrity sha512-JfR9zZYqqC1wqfhH3bXNUqND7iCpqzM+WiMymnIzR8ciURTbX9HJr0fbpKrtyfiLmLE1uAhES4kuG/JtfqwE7g==
+
 "@sinonjs/commons@^1.7.0":
   version "1.8.2"
   resolved "https://registry.yarnpkg.com/@sinonjs/commons/-/commons-1.8.2.tgz#858f5c4b48d80778fde4b9d541f27edc0d56488b"
