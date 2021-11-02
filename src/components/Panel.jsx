@@ -433,7 +433,7 @@ export default function Panel({
                   status: showDoingStack ? 'doing' : 'done',
                 })
               }
-              handleItemMiddleClick={deleteTask}
+              deleteTask={deleteTask}
               list={todoTasksList}
               moveTaskToPanel={moveTaskToPanel}
               type="todo"
@@ -445,7 +445,7 @@ export default function Panel({
                 handleItemClick={(taskToUpdate) =>
                   updateTask(taskToUpdate, { status: 'done' })
                 }
-                handleItemMiddleClick={deleteTask}
+                deleteTask={deleteTask}
                 list={doingTasksList}
                 moveTaskToPanel={moveTaskToPanel}
                 type="doing"
@@ -457,7 +457,7 @@ export default function Panel({
               handleItemClick={(taskToUpdate) =>
                 updateTask(taskToUpdate, { status: 'todo' })
               }
-              handleItemMiddleClick={deleteTask}
+              deleteTask={deleteTask}
               list={doneTasksList}
               type="done"
             />
