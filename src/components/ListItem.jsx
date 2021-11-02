@@ -4,8 +4,9 @@ import React, { useState } from 'react';
 export default function ListItem({
   backgroundColor,
   defaultElevation,
-  handleItemMiddleClick,
+  deleteTask,
   handleOnClick,
+  isMobile,
   moveTaskToPanel,
   task,
 }) {
@@ -35,10 +36,13 @@ export default function ListItem({
       onMouseUp={(event) => {
         // const clickTimeMs = Date.now() - clickStartMs;
         // if (clickTimeMs > 600) {
-        //   handleItemMiddleClick(task);
+        //   deleteTask(task);
         // } else {
-        if (event.button === 1 || (event.button === 0 && event.shiftKey)) {
-          handleItemMiddleClick(task);
+        if (
+          !isMobile &&
+          (event.button === 1 || (event.button === 0 && event.shiftKey))
+        ) {
+          deleteTask(task);
         } else if (event.button === 0) {
           handleOnClick(task);
         }
