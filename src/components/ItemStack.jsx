@@ -1,4 +1,10 @@
 import React, { useEffect, useState } from 'react';
+import { isMobile } from 'react-device-detect';
+import {
+  // SwipeableList,
+  SwipeableListItem,
+} from '@sandstreamdev/react-swipeable-list';
+// import '@sandstreamdev/react-swipeable-list/dist/styles.css';
 
 import Box from '@mui/material/Box';
 import Grow from '@mui/material/Grow';
@@ -14,7 +20,7 @@ const colors = {
 
 export default function ItemStack({
   handleItemClick,
-  handleItemMiddleClick,
+  deleteTask,
   moveTaskToPanel,
   list = [],
   type: listType,
@@ -51,6 +57,18 @@ export default function ItemStack({
     setFirstRender(false);
   }, []);
 
+  const ListItemReady = (task) => (
+    <ListItem
+      backgroundColor={itemBackgroundColor}
+      defaultElevation={defaultElevation}
+      deleteTask={() => deleteTask(task)}
+      handleOnClick={() => handleItemClick(task)}
+      isMobile={isMobile}
+      moveTaskToPanel={moveTaskToPanel}
+      task={task}
+    />
+  );
+
   return (
     <Box>
       <Box
@@ -85,14 +103,20 @@ export default function ItemStack({
               {...(checked ? { timeout: firstRender ? 1000 : 200 } : {})}
             >
               <span>
-                <ListItem
-                  backgroundColor={itemBackgroundColor}
-                  defaultElevation={defaultElevation}
-                  handleOnClick={() => handleItemClick(task)}
-                  handleItemMiddleClick={() => handleItemMiddleClick(task)}
-                  moveTaskToPanel={moveTaskToPanel}
-                  task={task}
-                />
+                {isMobile && task.status === 'todo' ? (
+                  <SwipeableListItem
+                    swipeLeft={{
+                      // content: <div>Revealed content during swipe</div>,
+                      action: () => {
+                        deleteTask(task);
+                      },
+                    }}
+                  >
+                    {ListItemReady(task)}
+                  </SwipeableListItem>
+                ) : (
+                  ListItemReady(task)
+                )}
               </span>
             </Grow>
           );
