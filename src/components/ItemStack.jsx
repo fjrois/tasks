@@ -23,6 +23,7 @@ export default function ItemStack({
   deleteTask,
   moveTaskToPanel,
   list = [],
+  showDoingStack,
   type: listType,
 }) {
   const defaultElevation = 1;
@@ -103,10 +104,13 @@ export default function ItemStack({
               {...(checked ? { timeout: firstRender ? 1000 : 200 } : {})}
             >
               <span>
-                {isMobile && task.status === 'todo' ? (
+                {isMobile &&
+                (task.status === 'todo' ||
+                  (task.status === 'doing' && !showDoingStack)) ? (
                   <SwipeableListItem
                     swipeLeft={{
                       // content: <div>Revealed content during swipe</div>,
+                      content: '',
                       action: () => {
                         deleteTask(task);
                       },

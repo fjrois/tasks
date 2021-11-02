@@ -436,6 +436,7 @@ export default function Panel({
               deleteTask={deleteTask}
               list={todoTasksList}
               moveTaskToPanel={moveTaskToPanel}
+              showDoingStack={showDoingStack}
               type="todo"
             />
           </Grid>
@@ -448,6 +449,7 @@ export default function Panel({
                 deleteTask={deleteTask}
                 list={doingTasksList}
                 moveTaskToPanel={moveTaskToPanel}
+                showDoingStack={showDoingStack}
                 type="doing"
               />
             </Grid>
