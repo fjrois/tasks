@@ -33,16 +33,16 @@ export default function ListItem({
         clickStartMs = Date.now();
       }}
       onMouseUp={(event) => {
-        const clickTimeMs = Date.now() - clickStartMs;
-        if (clickTimeMs > 600) {
+        // const clickTimeMs = Date.now() - clickStartMs;
+        // if (clickTimeMs > 600) {
+        //   handleItemMiddleClick(task);
+        // } else {
+        if (event.button === 1 || (event.button === 0 && event.shiftKey)) {
           handleItemMiddleClick(task);
-        } else {
-          if (event.button === 1 || (event.button === 0 && event.shiftKey)) {
-            handleItemMiddleClick(task);
-          } else if (event.button === 0) {
-            handleOnClick(task);
-          }
+        } else if (event.button === 0) {
+          handleOnClick(task);
         }
+        // }
       }}
       // onPress={() => handleOnDoubleClick(task)}
       // onClick={() => handleOnClick(task)}
