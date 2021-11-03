@@ -111,15 +111,15 @@ export default function App() {
       <Switch>
         <Route
           path="/"
-          component={() =>
-            MainView({
-              database,
-              login,
-              loginEmailSent,
-              logout,
-              user,
-            })
-          }
+          component={() => (
+            <MainView
+              database={database}
+              login={login}
+              loginEmailSent={loginEmailSent}
+              logout={logout}
+              user={user}
+            />
+          )}
         />
       </Switch>
     </Router>
