@@ -1,3 +1,4 @@
+import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import React, { useState } from 'react';
 
@@ -24,9 +25,10 @@ export default function ListItem({
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
-        minHeight: 50,
-        padding: '15px',
+        minHeight: 65,
+        padding: '16px',
         textAlign: 'center',
+        borderRadius: 2,
       }}
       elevation={elevation}
       key={task.id}
@@ -53,8 +55,12 @@ export default function ListItem({
       onMouseEnter={() => setElevation(higherElevation)}
       onMouseLeave={() => setElevation(defaultElevation)}
     >
-      {task?.topic?.name ? `[${task.topic.name}] ` : null}
-      {task?.title || null}
+      <Box>{task?.title || null}</Box>
+      {task?.topic?.name ? (
+        <Box sx={{ paddingTop: '7px' }}>
+          <b>{`[${task.topic.name}] `}</b>
+        </Box>
+      ) : null}
       {/* <button onClick={() => moveTaskToPanel(task)}> NEXT</button> */}
     </Paper>
   );
