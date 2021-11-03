@@ -300,7 +300,8 @@ export default function MainView({
   // }
 
   return (
-    <Container fixed maxWidth="sm">
+    <Container maxWidth="md">
+      {/* <Container maxWidth="sm"> */}
       {/* <img src={logo} className="App-logo" alt="logo" /> */}
       <Box display="flex" justifyContent="right">
         <Box
