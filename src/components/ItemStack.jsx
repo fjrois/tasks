@@ -71,7 +71,7 @@ export default function ItemStack({
   );
 
   return (
-    <Box>
+    <Box display="flex" flexDirection="column" alignItems="center">
       <Box
         sx={{
           // display: 'flex',
@@ -87,7 +87,7 @@ export default function ItemStack({
       >
         <h3>{title.toUpperCase()}</h3>
       </Box>
-      <Stack spacing={2}>
+      <Stack width="92%" minWidth="85px" spacing={2}>
         {/* {loadedListRef.current.map((task) => ( */}
         {list.map((task, index) => {
           return (
@@ -103,7 +103,7 @@ export default function ItemStack({
               }}
               {...(checked ? { timeout: firstRender ? 1000 : 200 } : {})}
             >
-              <span>
+              <div>
                 {isMobile &&
                 (task.status === 'todo' ||
                   (task.status === 'doing' && !showDoingStack)) ? (
@@ -121,7 +121,7 @@ export default function ItemStack({
                 ) : (
                   ListItemReady(task)
                 )}
-              </span>
+              </div>
             </Grow>
           );
         })}
