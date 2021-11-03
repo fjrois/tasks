@@ -405,7 +405,7 @@ function useLists({
   const [panelsList, setPanelsList] = useDatabaseState({
     database,
     dbPath: `panels/${user?.uid}`,
-    // debounce: 400,
+    debounce: 1000,
     defaultValue,
     // defaultValue: [{ id: 'all', name: 'all' }],
     skipDatabaseUse,
@@ -416,7 +416,7 @@ function useLists({
   const [tasksList, setTasksList] = useDatabaseState({
     database,
     dbPath,
-    // debounce: 200,
+    debounce: 1000,
     defaultValue,
     skipDatabaseUse,
   });
@@ -424,7 +424,7 @@ function useLists({
   const [topics, setTopics] = useDatabaseState({
     database,
     dbPath: `topics/${user?.uid}`,
-    // debounce: 400,
+    debounce: 1000,
     defaultValue,
     skipDatabaseUse,
   });
