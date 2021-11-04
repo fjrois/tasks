@@ -21,8 +21,10 @@ const colors = {
 export default function ItemStack({
   handleItemClick,
   deleteTask,
-  moveTaskToPanel,
   list = [],
+  moveTaskToPanel,
+  moveTaskLeft,
+  moveTaskRight,
   showDoingStack,
   type: listType,
 }) {
@@ -58,17 +60,21 @@ export default function ItemStack({
     setFirstRender(false);
   }, []);
 
-  const ListItemReady = (task) => (
-    <ListItem
-      backgroundColor={itemBackgroundColor}
-      defaultElevation={defaultElevation}
-      deleteTask={() => deleteTask(task)}
-      handleOnClick={() => handleItemClick(task)}
-      isMobile={isMobile}
-      moveTaskToPanel={moveTaskToPanel}
-      task={task}
-    />
-  );
+  const listItemReady = (task) => {
+    return (
+      <ListItem
+        backgroundColor={itemBackgroundColor}
+        defaultElevation={defaultElevation}
+        deleteTask={() => deleteTask(task)}
+        handleOnClick={() => handleItemClick(task)}
+        isMobile={isMobile}
+        moveTaskLeft={moveTaskLeft}
+        moveTaskRight={moveTaskRight}
+        moveTaskToPanel={moveTaskToPanel}
+        task={task}
+      />
+    );
+  };
 
   return (
     <Box display="flex" flexDirection="column" alignItems="center">
@@ -87,7 +93,7 @@ export default function ItemStack({
       >
         <h3>{title.toUpperCase()}</h3>
       </Box>
-      <Stack width="92%" minWidth="85px" spacing={2}>
+      <Stack width="92%" minWidth="85px" maxWidth="300px" spacing={2}>
         {/* {loadedListRef.current.map((task) => ( */}
         {list.map((task, index) => {
           return (
@@ -116,10 +122,10 @@ export default function ItemStack({
                       },
                     }}
                   >
-                    {ListItemReady(task)}
+                    {listItemReady(task)}
                   </SwipeableListItem>
                 ) : (
-                  ListItemReady(task)
+                  listItemReady(task)
                 )}
               </div>
             </Grow>
