@@ -1,4 +1,4 @@
-import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
+import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import Box from '@mui/material/Box';
 import IconButton from '@mui/material/IconButton';
@@ -75,27 +75,28 @@ export default function ListItem({
           // alightItems: 'center',
         }}
       >
-        {true ? (
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-            }}
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+          }}
+        >
+          <IconButton
+            disableRipple
+            size="small"
+            aria-label="move left"
+            disabled={!moveTaskLeft}
+            onClick={() => (moveTaskLeft ? moveTaskLeft(task) : null)}
           >
-            <IconButton
-              size="small"
-              aria-label="move left"
-              disabled={!moveTaskLeft}
-              onClick={() => (moveTaskLeft ? moveTaskLeft(task) : null)}
-            >
-              <ArrowBackIosIcon
-                sx={{ color: showArrows ? '' : 'transparent' }}
-                fontSize="10"
-              />
-            </IconButton>
-          </Box>
-        ) : null}
+            <ArrowBackIosNewIcon
+              sx={{
+                color: showArrows && moveTaskLeft ? '' : 'transparent',
+              }}
+              fontSize="10"
+            />
+          </IconButton>
+        </Box>
 
         <Box>
           <Box>{task?.title || null}</Box>
@@ -106,27 +107,26 @@ export default function ListItem({
           ) : null}
         </Box>
 
-        {true ? (
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-            }}
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+          }}
+        >
+          <IconButton
+            disableRipple
+            size="small"
+            aria-label="move right"
+            disabled={!moveTaskRight}
+            onClick={() => (moveTaskRight ? moveTaskRight(task) : null)}
           >
-            <IconButton
-              size="small"
-              aria-label="move right"
-              disabled={!moveTaskRight}
-              onClick={() => (moveTaskRight ? moveTaskRight(task) : null)}
-            >
-              <ArrowForwardIosIcon
-                sx={{ color: showArrows ? '' : 'transparent' }}
-                fontSize="10"
-              />
-            </IconButton>
-          </Box>
-        ) : null}
+            <ArrowForwardIosIcon
+              sx={{ color: showArrows && moveTaskRight ? '' : 'transparent' }}
+              fontSize="10"
+            />
+          </IconButton>
+        </Box>
       </Box>
       {/* <button onClick={() => moveTaskToPanel(task)}> NEXT</button> */}
     </Paper>
