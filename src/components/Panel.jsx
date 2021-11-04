@@ -428,7 +428,7 @@ export default function Panel({
         <Grid sx={{ flexGrow: 1 }} container spacing={2}>
           <Grid item xs={showDoingStack ? 4 : 6}>
             <ItemStack
-              handleItemClick={(taskToUpdate) =>
+              moveTaskRight={(taskToUpdate) =>
                 updateTask(taskToUpdate, {
                   status: showDoingStack ? 'doing' : 'done',
                 })
@@ -443,8 +443,13 @@ export default function Panel({
           {showDoingStack ? (
             <Grid item xs={4}>
               <ItemStack
-                handleItemClick={(taskToUpdate) =>
+                moveTaskRight={(taskToUpdate) =>
                   updateTask(taskToUpdate, { status: 'done' })
+                }
+                moveTaskLeft={(taskToUpdate) =>
+                  updateTask(taskToUpdate, {
+                    status: 'todo',
+                  })
                 }
                 deleteTask={deleteTask}
                 list={doingTasksList}
@@ -456,8 +461,10 @@ export default function Panel({
           ) : null}
           <Grid item xs={showDoingStack ? 4 : 6}>
             <ItemStack
-              handleItemClick={(taskToUpdate) =>
-                updateTask(taskToUpdate, { status: 'todo' })
+              moveTaskLeft={(taskToUpdate) =>
+                updateTask(taskToUpdate, {
+                  status: showDoingStack ? 'doing' : 'todo',
+                })
               }
               deleteTask={deleteTask}
               list={doneTasksList}
