@@ -1,5 +1,5 @@
 // import { isChrome, isChromium } from 'react-device-detect';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
@@ -18,15 +18,14 @@ import TopicsFilter from './TopicFilter.jsx';
 import useLocalStorageState from '../hooks/useLocalStorageState.js'; // TODO: use this when no connectivity
 import ViewSelector from './ViewSelector.jsx';
 
-function calculateProgress({ doneTasksList, todoTasksList }) {
-  if (!todoTasksList.length) return 100;
-  if (doneTasksList.length) {
-    return Math.floor(
-      (doneTasksList.length / (doneTasksList.length + todoTasksList.length)) *
-        100
-    );
-  }
-  return 0;
+function calculateProgress({ doingTasksList, doneTasksList, todoTasksList }) {
+  if (!doneTasksList.length) return 0;
+  const result = Math.floor(
+    (doneTasksList.length /
+      (doneTasksList.length + doingTasksList.length + todoTasksList.length)) *
+      100
+  );
+  return result;
 }
 
 export default function Panel({
@@ -120,12 +119,21 @@ export default function Panel({
         )
       : tasksList;
   }, [selectedTopicFilter, tasksList]);
+  // const filteredTasksList =
+  //   tasksList && selectedTopicFilter?.name
+  //     ? tasksList.filter(
+  //         (task) => task?.topic?.name === selectedTopicFilter.name
+  //       )
+  //     : tasksList;
 
   const doneTasksList = useMemo(() => {
     return filteredTasksList
       ? filteredTasksList.filter((task) => task && task.status === 'done')
       : [];
   }, [filteredTasksList]);
+  // const doneTasksList = filteredTasksList
+  //   ? filteredTasksList.filter((task) => task && task.status === 'done')
+  //   : [];
 
   const todoTasksList = useMemo(() => {
     return filteredTasksList
@@ -136,12 +144,22 @@ export default function Panel({
         )
       : [];
   }, [filteredTasksList, showDoingStack]);
+  // const todoTasksList = filteredTasksList
+  //   ? filteredTasksList.filter(
+  //       (task) =>
+  //         (task && task.status === 'todo') ||
+  //         (!showDoingStack && task.status === 'doing')
+  //     )
+  //   : [];
 
   const doingTasksList = useMemo(() => {
     return filteredTasksList
       ? filteredTasksList.filter((task) => task && task.status === 'doing')
       : [];
   }, [filteredTasksList]);
+  // const doingTasksList = filteredTasksList
+  //   ? filteredTasksList.filter((task) => task && task.status === 'doing')
+  //   : [];
 
   const [everCreatedTaskTitles, setEverCreatedTaskTitles] =
     useLocalStorageState({
@@ -152,10 +170,19 @@ export default function Panel({
 
   const [progress, setProgress] = useState(0);
 
+  const prevProgressRef = useRef(0);
   useEffect(() => {
-    const updatedProgress = calculateProgress({ doneTasksList, todoTasksList });
-    setProgress(updatedProgress);
-  }, [doneTasksList, todoTasksList]);
+    let updatedProgress = calculateProgress({
+      doingTasksList,
+      doneTasksList,
+      todoTasksList,
+    });
+
+    if (prevProgressRef.current !== updatedProgress) {
+      prevProgressRef.current = updatedProgress;
+      setProgress(updatedProgress);
+    }
+  }, [doingTasksList, doneTasksList, todoTasksList]);
 
   useEffect(() => {
     updatePanelMetadata({ progress });
