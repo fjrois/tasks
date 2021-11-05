@@ -29,7 +29,7 @@ export default function PanelTabs({
             onChange={(event, newValue) => setSelectedTab(newValue)}
             variant="scrollable"
             scrollButtons="auto"
-            aria-label="scrollable auto tabs example"
+            aria-label="scrollable auto tabs"
           >
             {panelsList
               ? panelsList.map((panel) => {
