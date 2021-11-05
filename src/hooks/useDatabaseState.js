@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ref, onValue, update } from 'firebase/database';
 
-// TODO debounce
 export default function useDatabaseState({
   database,
   dbPath,
@@ -55,16 +54,15 @@ export default function useDatabaseState({
   }, [dbPath]);
 
   useEffect(() => {
-    function updateDb() {
-      const updates = {};
-      updates[dbPath] = state;
-      console.log(`Updating ${dbPath}: ${JSON.stringify(updates)}`);
-      update(ref(database), updates);
-    }
     if (skipDatabaseUse) return;
-
     if (!state || dbPath.includes('undefined')) return;
     if (JSON.stringify(state) !== JSON.stringify(defaultValue)) {
+      function updateDb() {
+        const updates = {};
+        updates[dbPath] = state;
+        console.log(`Updating ${dbPath}: ${JSON.stringify(updates)}`);
+        update(ref(database), updates);
+      }
       if (debounce) {
         const debounceMs = typeof debounce === 'number' ? debounce : 1000;
         const timeoutId = setTimeout(() => {
