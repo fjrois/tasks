@@ -406,18 +406,17 @@ function useLists({
   const [panelsList, setPanelsList] = useDatabaseState({
     database,
     dbPath: `panels/${user?.uid}`,
-    debounce: 500,
+    // debounce: 500,
     defaultValue,
     // defaultValue: [{ id: 'all', name: 'all' }],
     skipDatabaseUse,
   });
 
   const selectedPanelId = panelsList ? panelsList[selectedTab]?.id : undefined;
-  const dbPath = `/lists/${user?.uid}/${selectedPanelId}`;
   const [tasksList, setTasksList] = useDatabaseState({
     database,
-    dbPath,
-    debounce: 500,
+    dbPath: `/lists/${user?.uid}/${selectedPanelId}`,
+    // debounce: 500,
     defaultValue,
     skipDatabaseUse,
   });
@@ -425,7 +424,7 @@ function useLists({
   const [topics, setTopics] = useDatabaseState({
     database,
     dbPath: `topics/${user?.uid}`,
-    debounce: 500,
+    // debounce: 200,
     defaultValue,
     skipDatabaseUse,
   });
