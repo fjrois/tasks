@@ -100,10 +100,11 @@ export default function useDatabaseState({
     return () => {
       console.log(`Canceling subscription to ${dbPath}}`);
       calcelSubscription();
+      setState(0);
       // setState(null);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dbPath]);
+  }, [database, dbPath, skipDatabaseUse]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
 
   // return [state, setState];
   // return [values, updateList];
