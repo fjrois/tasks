@@ -45,6 +45,11 @@ export default function MainView({
     user,
   });
 
+  const [confettiedPanels, setConfettiedPanels] = useLocalStorageState({
+    defaultValue: [],
+    key: `tasks:confettied-panels`,
+  });
+
   // let dbPath;
   // switch (selectedPanelId) {
   //   case 'all':
@@ -82,7 +87,7 @@ export default function MainView({
   useEffect(() => {
     if (user) {
       const isFirstTimeUserResult = isFirstTimeUser(user);
-      console.log('isFirstTimeUserResult:', isFirstTimeUserResult);
+      // console.log('isFirstTimeUserResult:', isFirstTimeUserResult);
       if (isFirstTimeUserResult) {
         // Load user data that was previously anonymous
         const { panelsList, tasksList, topics } =
@@ -151,7 +156,8 @@ export default function MainView({
       const updatedPanel = { ...foundPanelData };
       updatedPanel.progress = progress;
       const updatedPanelList = [...panelsList];
-      updatedPanelList[foundPanelIndex].progress = progress;
+      // updatedPanelList[foundPanelIndex].progress = progress;
+      updatedPanelList[foundPanelIndex] = updatedPanel;
       return updatedPanelList;
     });
   }
@@ -167,7 +173,11 @@ export default function MainView({
     } else {
       console.log(`Creating panel ${panelName}`);
       const updatedPanelsList = panelsList ? [...panelsList] : [];
-      const newPanelMetadata = { id: `panel-${uuidv4()}`, name: panelName };
+      const newPanelMetadata = {
+        id: `panel-${uuidv4()}`,
+        name: panelName,
+        progress: { real: 0, potential: 0 },
+      };
       updatedPanelsList.push(newPanelMetadata);
       setPanelsList(updatedPanelsList);
       const newPanelIndex = updatedPanelsList.length - 1;
@@ -192,6 +202,9 @@ export default function MainView({
         (panel) => panel.id !== panelToDelete.id
       );
       setPanelsList(updatedPanelsList);
+      setConfettiedPanels((confettiedPanels) =>
+        confettiedPanels.filter((panelId) => panelId !== panelToDelete.id)
+      );
     }
   }
 
@@ -348,6 +361,7 @@ export default function MainView({
                 selectedTab === index ? (
                   <Panel
                     // allowInput={selectedPanelId !== 'all'}
+                    confettiedPanels={confettiedPanels}
                     createTask={createTask}
                     database={database}
                     data={panelData}
@@ -360,6 +374,7 @@ export default function MainView({
                         targetPanelIndex: index + 1,
                       })
                     }
+                    setConfettiedPanels={setConfettiedPanels}
                     setTopics={setTopics}
                     tasksList={
                       tasksList
