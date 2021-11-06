@@ -3,7 +3,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Typography from '@mui/material/Typography';
 
 export default function CircularProgressWithLabel(props) {
-  const { hidelabel: hideLabel, value } = props;
+  const { hideLabel, value } = props;
   return (
     <Box sx={{ position: 'relative', display: 'inline-flex' }}>
       <CircularProgress
