@@ -12,12 +12,6 @@ import Stack from '@mui/material/Stack';
 
 import ListItem from './ListItem';
 
-const colors = {
-  green: '#91ff9a',
-  yellow: '#ffff8a',
-  orange: '#ffed7a',
-};
-
 export default function ItemStack({
   handleItemClick,
   deleteTask,
@@ -33,13 +27,13 @@ export default function ItemStack({
 
   let itemBackgroundColor, title;
   if (listType === 'done') {
-    itemBackgroundColor = colors.green;
+    itemBackgroundColor = 'success.main';
     title = 'Done';
   } else if (listType === 'todo') {
-    itemBackgroundColor = colors.yellow;
+    itemBackgroundColor = 'warning.light';
     title = 'To do';
   } else if (listType === 'doing') {
-    itemBackgroundColor = colors.orange;
+    itemBackgroundColor = 'warning.main';
     title = 'Doing';
   }
 
