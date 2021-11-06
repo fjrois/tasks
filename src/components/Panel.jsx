@@ -1,6 +1,7 @@
 // import { isChrome, isChromium } from 'react-device-detect';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { v4 as uuidv4 } from 'uuid';
+import confetti from 'canvas-confetti';
 
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import Autocomplete from '@mui/material/Autocomplete';
@@ -18,14 +19,44 @@ import TopicsFilter from './TopicFilter.jsx';
 import useLocalStorageState from '../hooks/useLocalStorageState.js'; // TODO: use this when no connectivity
 import ViewSelector from './ViewSelector.jsx';
 
-function calculateProgress({ doingTasksList, doneTasksList, todoTasksList }) {
-  if (!doneTasksList.length) return 0;
-  const result = Math.floor(
-    (doneTasksList.length /
-      (doneTasksList.length + doingTasksList.length + todoTasksList.length)) *
-      100
-  );
+function calculatePanelProgress(tasks) {
+  let todos = 0,
+    doings = 0,
+    dones = 0;
+  tasks.forEach((task) => {
+    if (task.status === 'todo') todos++;
+    if (task.status === 'doing') doings++;
+    if (task.status === 'done') dones++;
+  });
+  if (!dones) return 0;
+  const result = Math.floor((dones / (dones + doings + todos)) * 100);
   return result;
+}
+
+function sendConfettiFromSides() {
+  const end = Date.now() + 2 * 1000;
+
+  // const colors = ['#bb0000', '#ffffff'];
+  (function frame() {
+    confetti({
+      particleCount: 8,
+      angle: 60,
+      spread: 65,
+      origin: { x: 0 },
+      // colors,
+    });
+    confetti({
+      particleCount: 8,
+      angle: 120,
+      spread: 65,
+      origin: { x: 1 },
+      // colors,
+    });
+
+    if (Date.now() < end) {
+      requestAnimationFrame(frame);
+    }
+  })();
 }
 
 export default function Panel({
@@ -112,38 +143,38 @@ export default function Panel({
     setSelectedInputTopicId(selectedTopicFilter?.id || '');
   }, [selectedTopicFilter, setSelectedInputTopicId]);
 
-  const filteredTasksList = useMemo(() => {
-    return tasksList && selectedTopicFilter?.name
-      ? tasksList.filter(
-          (task) => task?.topic?.name === selectedTopicFilter.name
-        )
-      : tasksList;
-  }, [selectedTopicFilter, tasksList]);
-  // const filteredTasksList =
-  //   tasksList && selectedTopicFilter?.name
+  // const filteredTasksList = useMemo(() => {
+  //   return tasksList && selectedTopicFilter?.name
   //     ? tasksList.filter(
   //         (task) => task?.topic?.name === selectedTopicFilter.name
   //       )
   //     : tasksList;
+  // }, [selectedTopicFilter, tasksList]);
+  const filteredTasksList =
+    tasksList && selectedTopicFilter?.name
+      ? tasksList.filter(
+          (task) => task?.topic?.name === selectedTopicFilter.name
+        )
+      : tasksList;
 
-  const doneTasksList = useMemo(() => {
-    return filteredTasksList
-      ? filteredTasksList.filter((task) => task && task.status === 'done')
-      : [];
-  }, [filteredTasksList]);
+  // const doneTasksList = useMemo(() => {
+  //   return filteredTasksList
+  //     ? filteredTasksList.filter((task) => task && task.status === 'done')
+  //     : [];
+  // }, [filteredTasksList]);
   // const doneTasksList = filteredTasksList
   //   ? filteredTasksList.filter((task) => task && task.status === 'done')
   //   : [];
 
-  const todoTasksList = useMemo(() => {
-    return filteredTasksList
-      ? filteredTasksList.filter(
-          (task) =>
-            (task && task.status === 'todo') ||
-            (!showDoingStack && task.status === 'doing')
-        )
-      : [];
-  }, [filteredTasksList, showDoingStack]);
+  // const todoTasksList = useMemo(() => {
+  //   return filteredTasksList
+  //     ? filteredTasksList.filter(
+  //         (task) =>
+  //           (task && task.status === 'todo') ||
+  //           (!showDoingStack && task.status === 'doing')
+  //       )
+  //     : [];
+  // }, [filteredTasksList, showDoingStack]);
   // const todoTasksList = filteredTasksList
   //   ? filteredTasksList.filter(
   //       (task) =>
@@ -152,11 +183,11 @@ export default function Panel({
   //     )
   //   : [];
 
-  const doingTasksList = useMemo(() => {
-    return filteredTasksList
-      ? filteredTasksList.filter((task) => task && task.status === 'doing')
-      : [];
-  }, [filteredTasksList]);
+  // const doingTasksList = useMemo(() => {
+  //   return filteredTasksList
+  //     ? filteredTasksList.filter((task) => task && task.status === 'doing')
+  //     : [];
+  // }, [filteredTasksList]);
   // const doingTasksList = filteredTasksList
   //   ? filteredTasksList.filter((task) => task && task.status === 'doing')
   //   : [];
@@ -168,26 +199,34 @@ export default function Panel({
       key: 'everCreatedTaskTitles',
     });
 
-  const [progress, setProgress] = useState(0);
+  const [confettiedPanels, setConfettiedPanels] = useLocalStorageState({
+    defaultValue: [],
+    key: `tasks:confettied-panels`,
+  });
 
   const prevProgressRef = useRef(0);
   useEffect(() => {
-    let updatedProgress = calculateProgress({
-      doingTasksList,
-      doneTasksList,
-      todoTasksList,
-    });
-
+    if (!tasksList) return;
+    let updatedProgress = calculatePanelProgress(tasksList);
     if (prevProgressRef.current !== updatedProgress) {
-      prevProgressRef.current = updatedProgress;
-      setProgress(updatedProgress);
-    }
-  }, [doingTasksList, doneTasksList, todoTasksList]);
+      updatePanelMetadata({ progress: updatedProgress });
 
-  useEffect(() => {
-    updatePanelMetadata({ progress });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [progress]);
+      if (!confettiedPanels.includes(panelId) && updatedProgress === 100) {
+        sendConfettiFromSides();
+        setConfettiedPanels((confettiedPanels) => [
+          ...confettiedPanels,
+          panelId,
+        ]);
+      }
+      prevProgressRef.current = updatedProgress;
+    }
+  }, [
+    // confettiedPanels,
+    // panelId,
+    // setConfettiedPanels,
+    tasksList,
+    // updatePanelMetadata,
+  ]);
 
   function createTopic(topicName) {
     console.log('topicName:', topicName);
@@ -227,65 +266,6 @@ export default function Panel({
       return true;
     }
   }
-
-  // function createTask(taskTitle) {
-  //   const foundTask = findTaskTitle(taskTitle);
-  //   if (foundTask) {
-  //     console.log(
-  //       `There is already a task with the title ${taskTitle} in the '${foundTask.status}' list`
-  //     );
-  //   } else {
-  //     console.log(`Creating task ${taskTitle}`);
-  //     const task = {
-  //       dateCreated: Date.now(),
-  //       id: uuidv4(),
-  //       status: 'todo',
-  //       title: taskTitle,
-  //     };
-  //     console.log('task:', task);
-  //     setTasksList((tasksList) => [...tasksList, task]);
-  //     return task;
-  //   }
-  // }
-
-  // function deleteTask(taskToDelete) {
-  //   console.log(`Deleting task "${taskToDelete.title}" (${taskToDelete.id})`);
-  //   setTasksList((tasksList) =>
-  //     tasksList.filter((task) => task.id !== taskToDelete.id)
-  //   );
-  // }
-
-  // function findTaskTitle(taskTitle) {
-  //   const foundTask = tasksList.find(
-  //     (task) => task?.title?.toLowerCase() === taskTitle.toLowerCase()
-  //   );
-  //   return foundTask;
-  // }
-
-  // function updateTask(taskToUpdate, updates = {}) {
-  //   console.log(
-  //     `Updating task "${taskToUpdate.title}" (${
-  //       taskToUpdate.id
-  //     }): ${JSON.stringify(updates)}`
-  //   );
-
-  //   setTasksList((tasksList) => {
-  //     const foundTaskIndex = tasksList.findIndex(
-  //       (task) => task.id === taskToUpdate.id
-  //     );
-  //     if (foundTaskIndex === -1) {
-  //       console.log(
-  //         `Task ${taskToUpdate.title} (${taskToUpdate.id}) doesn't seem to exist in this panel`
-  //       );
-  //       return tasksList;
-  //     }
-  //     const foundTask = tasksList[foundTaskIndex];
-  //     const updatedTask = { ...foundTask, ...updates };
-  //     const updatedTasksList = [...tasksList];
-  //     updatedTasksList[foundTaskIndex] = updatedTask;
-  //     return updatedTasksList;
-  //   });
-  // }
 
   return (
     <>
@@ -461,7 +441,15 @@ export default function Panel({
                 })
               }
               deleteTask={deleteTask}
-              list={todoTasksList}
+              list={
+                !filteredTasksList
+                  ? []
+                  : filteredTasksList.filter(
+                      (task) =>
+                        (task && task.status === 'todo') ||
+                        (!showDoingStack && task.status === 'doing')
+                    )
+              }
               moveTaskToPanel={moveTaskToPanel}
               showDoingStack={showDoingStack}
               type="todo"
@@ -479,7 +467,13 @@ export default function Panel({
                   })
                 }
                 deleteTask={deleteTask}
-                list={doingTasksList}
+                list={
+                  !filteredTasksList
+                    ? []
+                    : filteredTasksList.filter(
+                        (task) => task && task.status === 'doing'
+                      )
+                }
                 moveTaskToPanel={moveTaskToPanel}
                 showDoingStack={showDoingStack}
                 type="doing"
@@ -494,7 +488,13 @@ export default function Panel({
                 })
               }
               deleteTask={deleteTask}
-              list={doneTasksList}
+              list={
+                !filteredTasksList
+                  ? []
+                  : filteredTasksList.filter(
+                      (task) => task && task.status === 'done'
+                    )
+              }
               type="done"
             />
           </Grid>
