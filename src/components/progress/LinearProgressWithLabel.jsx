@@ -5,11 +5,52 @@ import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 
 export default function LinearProgressWithLabel(props) {
-  const { hidelabel: hideLabel, size, value } = props;
+  const { hideLabel, progress, size, value, width } = props;
+  const { real: realProgress, potential: potentialProgress } = progress;
+  const height = '5px';
   return (
     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-      <Box sx={{ width: '100%', mr: hideLabel ? 0 : 1 }}>
-        <LinearProgress variant="determinate" {...props} />
+      <Box
+        sx={{
+          width: width ? `${width}%` : '100%',
+          mr: hideLabel ? 0 : 1,
+        }}
+      >
+        <LinearProgress
+          color={'success'}
+          variant="determinate"
+          sx={{
+            backgroundColor: 'transparent',
+            height,
+            borderRadius: '40px',
+            // width: '200px',
+          }}
+          {...props}
+          value={realProgress}
+        />
+        <LinearProgress
+          color={'warning'}
+          variant="determinate"
+          sx={{
+            height,
+            borderRadius: '40px',
+            top: `-${height}`,
+            zIndex: '-1',
+          }}
+          {...props}
+          value={potentialProgress}
+        />
+        {/* <LinearProgress
+          variant="buffer"
+          sx={{
+            // height: 10,
+            borderRadius: 8,
+            colorPrimary: 'yellow',
+            colorSecondary: 'red',
+          }}
+          value={value}
+          valueBuffer={50}
+        /> */}
       </Box>
       {hideLabel ? null : (
         <Box sx={{ minWidth: size === 's' ? 2 : 35 }}>
