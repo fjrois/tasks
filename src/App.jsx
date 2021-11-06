@@ -1,4 +1,5 @@
 import { MemoryRouter as Router, Switch, Route } from 'react-router-dom';
+import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { useEffect, useState } from 'react';
 import { initializeApp } from 'firebase/app';
 import { getDatabase } from 'firebase/database';
@@ -32,6 +33,18 @@ const actionCodeSettings = {
 };
 
 const auth = getAuth();
+
+const theme = createTheme({
+  palette: {
+    success: {
+      main: '#91ff9a',
+    },
+    warning: {
+      light: '#ffff8a',
+      main: '#ffed7a',
+    },
+  },
+});
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -112,13 +125,15 @@ export default function App() {
         <Route
           path="/"
           component={() => (
-            <MainView
-              database={database}
-              login={login}
-              loginEmailSent={loginEmailSent}
-              logout={logout}
-              user={user}
-            />
+            <ThemeProvider theme={theme}>
+              <MainView
+                database={database}
+                login={login}
+                loginEmailSent={loginEmailSent}
+                logout={logout}
+                user={user}
+              />
+            </ThemeProvider>
           )}
         />
       </Switch>
