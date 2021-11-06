@@ -49,32 +49,33 @@ export default function PanelTabs({
                         //   handleOnClick(task);
                         // }
                       }}
-                      label={
-                        <Box
-                          sx={
-                            {
-                              // display: 'flex',
-                              // flexWrap: 'wrap',
-                              // '& > :not(style)': {
-                              // m: 1,
-                              // width: 128,
-                              // height: 100,
-                              // },
-                              // marginTop: '2px',
-                            }
-                          }
-                        >
-                          <Box>{panel.name}</Box>
-                          <Box>
-                            <LinearProgressWithLabel
-                              color={getProgressColor(panel.progress)}
-                              hidelabel={1}
-                              size={'s'}
-                              value={panel.progress || 0}
-                            />
-                          </Box>
-                        </Box>
-                      }
+                      // label={
+                      //   <Box
+                      //     sx={
+                      //       {
+                      //         // display: 'flex',
+                      //         // flexWrap: 'wrap',
+                      //         // '& > :not(style)': {
+                      //         // m: 1,
+                      //         // width: 128,
+                      //         // height: 100,
+                      //         // },
+                      //         // marginTop: '2px',
+                      //       }
+                      //     }
+                      //   >
+                      //     <Box>{panel.name}</Box>
+                      //     <Box>
+                      //       <LinearProgressWithLabel
+                      //         color={getProgressColor(panel.progress)}
+                      //         hideLabel={1}
+                      //         size={'s'}
+                      //         value={panel.progress || 0}
+                      //       />
+                      //     </Box>
+                      //   </Box>
+                      // }
+                      label={panel.name}
                     />
                   );
                 })
