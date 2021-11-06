@@ -7,8 +7,6 @@ import Tabs from '@mui/material/Tabs';
 import TextField from '@mui/material/TextField';
 import Tooltip from '@mui/material/Tooltip';
 
-import LinearProgressWithLabel from './progress/LinearProgressWithLabel.jsx';
-
 export default function PanelTabs({
   createPanel,
   deletePanel,
@@ -124,11 +122,4 @@ export default function PanelTabs({
       </Grid>
     </>
   );
-}
-
-function getProgressColor(progress) {
-  return 'primary';
-  //   if (!progress || progress < 60) return 'error';
-  //   if (progress < 85) return 'warning';
-  //   return 'primary';
 }
