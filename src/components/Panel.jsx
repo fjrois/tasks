@@ -14,6 +14,7 @@ import TextField from '@mui/material/TextField';
 
 import ItemStack from './ItemStack.jsx';
 import InputTopicSelector from './InputTopicSelector.jsx';
+import LinearProgressWithLabel from './progress/LinearProgressWithLabel';
 import TopicsFilter from './TopicFilter.jsx';
 // import useDatabaseState from '../hooks/useDatabaseState.js';
 import useLocalStorageState from '../hooks/useLocalStorageState.js'; // TODO: use this when no connectivity
@@ -28,9 +29,17 @@ function calculatePanelProgress(tasks) {
     if (task.status === 'doing') doings++;
     if (task.status === 'done') dones++;
   });
-  if (!dones) return 0;
-  const result = Math.floor((dones / (dones + doings + todos)) * 100);
-  return result;
+
+  const progress = !dones
+    ? 0
+    : Math.floor((dones / (dones + doings + todos)) * 100);
+
+  const potentialProgress =
+    !dones && !doings
+      ? 0
+      : Math.floor(((dones + doings) / (dones + doings + todos)) * 100);
+
+  return { progress, potentialProgress };
 }
 
 function sendConfettiFromSides() {
@@ -61,11 +70,13 @@ function sendConfettiFromSides() {
 
 export default function Panel({
   allowInput = true,
+  confettiedPanels,
   createTask,
-  data: { id: panelId, name: panelName },
+  data: { id: panelId, name: panelName, progress: panelProgress },
   database,
   deleteTask,
   moveTaskToPanel,
+  setConfettiedPanels,
   setTopics,
   tasksList = [],
   topics,
@@ -199,33 +210,32 @@ export default function Panel({
       key: 'everCreatedTaskTitles',
     });
 
-  const [confettiedPanels, setConfettiedPanels] = useLocalStorageState({
-    defaultValue: [],
-    key: `tasks:confettied-panels`,
-  });
-
-  const prevProgressRef = useRef(0);
+  // const prevProgressRef = useRef(0);
+  // const prevPotentialProgressRef = useRef(0);
   useEffect(() => {
     if (!tasksList) return;
-    let updatedProgress = calculatePanelProgress(tasksList);
-    if (prevProgressRef.current !== updatedProgress) {
-      updatePanelMetadata({ progress: updatedProgress });
+    let { progress, potentialProgress } = calculatePanelProgress(tasksList);
+    // if (
+    // prevProgressRef.current !== progress &&
+    // prevPotentialProgressRef.current !== potentialProgress
+    // ) {
+    updatePanelMetadata({
+      progress: { real: progress, potential: potentialProgress },
+    });
 
-      if (!confettiedPanels.includes(panelId) && updatedProgress === 100) {
-        sendConfettiFromSides();
-        setConfettiedPanels((confettiedPanels) => [
-          ...confettiedPanels,
-          panelId,
-        ]);
-      }
-      prevProgressRef.current = updatedProgress;
+    if (!confettiedPanels.includes(panelId) && progress === 100) {
+      sendConfettiFromSides();
+      setConfettiedPanels((confettiedPanels) => [...confettiedPanels, panelId]);
     }
+    // prevProgressRef.current = progress;
+    // prevPotentialProgressRef.current = potentialProgress;
+    // }
   }, [
-    // confettiedPanels,
-    // panelId,
-    // setConfettiedPanels,
+    confettiedPanels,
+    panelId,
+    setConfettiedPanels,
     tasksList,
-    // updatePanelMetadata,
+    updatePanelMetadata,
   ]);
 
   function createTopic(topicName) {
@@ -271,19 +281,6 @@ export default function Panel({
     <>
       {/* <Box
         sx={{
-          // display: 'flex',
-          // flexWrap: 'wrap',
-          '& > :not(style)': {
-            m: 1,
-            // width: 128,
-            height: 28,
-          },
-        }}
-      >
-        <LinearProgressWithLabel value={progress} />
-      </Box> */}
-      {/* <Box
-        sx={{
           display: 'flex',
           flexWrap: 'wrap',
           '& > :not(style)': {
@@ -293,7 +290,17 @@ export default function Panel({
           },
         }}
       > */}
-      <Box paddingTop="10px" paddingBottom="10px">
+      <Box
+        sx={{
+          marginTop: '9px',
+          width: '99%',
+          marginLeft: 'auto',
+          marginRight: 'auto',
+        }}
+      >
+        <LinearProgressWithLabel hideLabel progress={panelProgress} />
+      </Box>
+      <Box paddingTop="10px" paddingBottom="4px">
         <form
           onSubmit={(event) => {
             event.preventDefault();
@@ -433,7 +440,7 @@ export default function Panel({
 
       <div>
         <Grid sx={{ flexGrow: 1 }} container spacing={2}>
-          <Grid item xs={showDoingStack ? 4 : 6}>
+          <Grid item xs={showDoingStack ? 4 : 6} sx={{ paddingTop: 0 }}>
             <ItemStack
               moveTaskRight={(taskToUpdate) =>
                 updateTask(taskToUpdate, {
@@ -456,7 +463,7 @@ export default function Panel({
             />
           </Grid>
           {showDoingStack ? (
-            <Grid item xs={4}>
+            <Grid item xs={4} sx={{ paddingTop: 0 }}>
               <ItemStack
                 moveTaskRight={(taskToUpdate) =>
                   updateTask(taskToUpdate, { status: 'done' })
@@ -480,7 +487,7 @@ export default function Panel({
               />
             </Grid>
           ) : null}
-          <Grid item xs={showDoingStack ? 4 : 6}>
+          <Grid item xs={showDoingStack ? 4 : 6} sx={{ paddingTop: 0 }}>
             <ItemStack
               moveTaskLeft={(taskToUpdate) =>
                 updateTask(taskToUpdate, {
