@@ -5,7 +5,7 @@ export default function TopicFilter({
   deleteTopic,
   selectedTopicFilterIndex,
   setSelectedTopicFilterIndex,
-  topics,
+  topicsList,
 }) {
   return (
     <ToggleButtonGroup
@@ -18,8 +18,8 @@ export default function TopicFilter({
         setSelectedTopicFilterIndex(newValue);
       }}
     >
-      {topics
-        ? topics.map((topic, index) => (
+      {topicsList
+        ? topicsList.map((topic, index) => (
             <ToggleButton
               onMouseDown={(event) => {
                 // (Middle click) or (Right click + shift)
@@ -42,7 +42,7 @@ export default function TopicFilter({
               aria-label="list"
             >
               {<div>{topic.name}</div>}
-              {/* {<div>{abbreviateName(topics[topicId].name)}</div>} */}
+              {/* {<div>{abbreviateName(topicsList[topicId].name)}</div>} */}
             </ToggleButton>
           ))
         : null}

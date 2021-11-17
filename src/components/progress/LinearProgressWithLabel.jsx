@@ -5,8 +5,8 @@ import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 
 export default function LinearProgressWithLabel(props) {
-  const { hideLabel, progress, size, value, width } = props;
-  const { real: realProgress, potential: potentialProgress } = progress;
+  const { hidelabel: hideLabel, progress, size, value, width } = props;
+  const { real: realProgress = 0, potential: potentialProgress = 0 } = progress;
   const height = '5px';
   return (
     <Box sx={{ display: 'flex', alignItems: 'center' }}>

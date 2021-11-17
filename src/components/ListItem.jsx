@@ -1,7 +1,9 @@
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
+
 import Box from '@mui/material/Box';
 import IconButton from '@mui/material/IconButton';
+import ListItemActionsButton from './ListItemActionsButton';
 import Paper from '@mui/material/Paper';
 import React, { useState } from 'react';
 
@@ -15,11 +17,13 @@ export default function ListItem({
   isMobile,
   moveTaskLeft,
   moveTaskRight,
-  moveTaskToPanel,
+  moveTaskToNextPanel,
+  moveTaskToPreviousPanel,
+  removeTaskFromPanel,
   task,
 }) {
   const [elevation, setElevation] = useState(defaultElevation);
-  const [showArrows, setShowArrows] = useState(false);
+  const [showIcons, setShowIcons] = useState(false);
 
   // let clickStartMs;
   return (
@@ -28,7 +32,7 @@ export default function ListItem({
       sx={{
         backgroundColor,
         color: 'text.secondary',
-        // cursor: 'pointer',
+        cursor: handleOnClick ? 'pointer' : '',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
@@ -36,6 +40,7 @@ export default function ListItem({
         padding: '16px 8px 16px 8px',
         textAlign: 'center',
         borderRadius: 2,
+        position: 'relative',
       }}
       elevation={elevation}
       key={task.id}
@@ -52,21 +57,39 @@ export default function ListItem({
           (event.button === 1 || (event.button === 0 && event.shiftKey))
         ) {
           deleteTask(task);
+        } else if (handleOnClick && event.button === 0) {
+          handleOnClick(task);
         }
-        // else if (event.button === 0) {
-        //   handleOnClick(task);
-        // }
       }}
       // onClick={() => handleOnClick(task)}
       onMouseOver={() => {
         setElevation(higherElevation);
-        setShowArrows(true);
+        setShowIcons(true);
       }}
       onMouseLeave={() => {
         setElevation(defaultElevation);
-        setShowArrows(false);
+        setShowIcons(false);
       }}
     >
+      {moveTaskToNextPanel || moveTaskToPreviousPanel ? (
+        <Box position="absolute" top="8%" right="5%">
+          <ListItemActionsButton
+            color={showIcons ? '' : 'transparent'}
+            deleteTask={deleteTask}
+            moveTaskToNextPanel={
+              moveTaskToNextPanel ? () => moveTaskToNextPanel(task) : null
+            }
+            moveTaskToPreviousPanel={
+              moveTaskToPreviousPanel
+                ? () => moveTaskToPreviousPanel(task)
+                : null
+            }
+            removeTaskFromPanel={
+              removeTaskFromPanel ? () => removeTaskFromPanel(task) : null
+            }
+          />
+        </Box>
+      ) : null}
       <Box
         sx={{
           display: 'flex',
@@ -91,17 +114,27 @@ export default function ListItem({
           >
             <ArrowBackIosNewIcon
               sx={{
-                color: showArrows && moveTaskLeft ? '' : 'transparent',
+                color: showIcons && moveTaskLeft ? '' : 'transparent',
               }}
               fontSize="10"
             />
           </IconButton>
         </Box>
 
-        <Box>
+        <Box
+          sx={{
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+          }}
+        >
           <Box>{task?.title || null}</Box>
           {task?.topic?.name ? (
-            <Box sx={{ paddingTop: '7px' }}>
+            <Box
+              sx={{
+                paddingTop: '7px',
+              }}
+            >
               <b>{`[${task.topic.name}] `}</b>
             </Box>
           ) : null}
@@ -122,13 +155,12 @@ export default function ListItem({
             onClick={() => (moveTaskRight ? moveTaskRight(task) : null)}
           >
             <ArrowForwardIosIcon
-              sx={{ color: showArrows && moveTaskRight ? '' : 'transparent' }}
+              sx={{ color: showIcons && moveTaskRight ? '' : 'transparent' }}
               fontSize="10"
             />
           </IconButton>
         </Box>
       </Box>
-      {/* <button onClick={() => moveTaskToPanel(task)}> NEXT</button> */}
     </Paper>
   );
 }

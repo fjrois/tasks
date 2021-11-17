@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 
 export default function useLocalStorageState({
   debounce,
-  defaultValue = '',
+  defaultValue,
   key,
   parsers: { serialize = JSON.stringify, deserialize = JSON.parse } = {},
 }) {

@@ -1,9 +1,6 @@
 import { MemoryRouter as Router, Switch, Route } from 'react-router-dom';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { useEffect, useState } from 'react';
-import { initializeApp } from 'firebase/app';
-import { getDatabase } from 'firebase/database';
-// import { getAnalytics } from 'firebase/analytics';
 import {
   getAuth,
   isSignInWithEmailLink,
@@ -20,12 +17,8 @@ import config from './config';
 import MainView from './components/MainView.jsx';
 // Initialize Firebase
 const {
-  firebase: firebaseConfig,
   login: { redirectUrl: loginRedirectUrl },
 } = config;
-const firebaseApp = initializeApp(firebaseConfig);
-const database = getDatabase(firebaseApp);
-// const analytics = getAnalytics(firebaseApp);
 
 const actionCodeSettings = {
   handleCodeInApp: true,
@@ -127,7 +120,6 @@ export default function App() {
           component={() => (
             <ThemeProvider theme={theme}>
               <MainView
-                database={database}
                 login={login}
                 loginEmailSent={loginEmailSent}
                 logout={logout}

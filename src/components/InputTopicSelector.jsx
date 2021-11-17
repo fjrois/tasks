@@ -6,7 +6,7 @@ import Select from '@mui/material/Select';
 export default function TopicSelector({
   selectedTopicId,
   setSelectedTopicId,
-  topics,
+  topicsList,
 }) {
   return (
     <FormControl size="small" sx={{ m: 0, minWidth: 95 }}>
@@ -20,8 +20,8 @@ export default function TopicSelector({
         <MenuItem value="">
           <em>None</em>
         </MenuItem>
-        {topics
-          ? topics.map((topic) => (
+        {topicsList
+          ? topicsList.map((topic) => (
               <MenuItem key={topic.id} value={topic.id}>
                 {topic.name}
               </MenuItem>

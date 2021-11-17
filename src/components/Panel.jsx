@@ -1,6 +1,5 @@
 // import { isChrome, isChromium } from 'react-device-detect';
 import React, { useEffect } from 'react';
-import { v4 as uuidv4 } from 'uuid';
 import confetti from 'canvas-confetti';
 
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
@@ -12,12 +11,12 @@ import Grid from '@mui/material/Grid';
 import IconButton from '@mui/material/IconButton';
 import TextField from '@mui/material/TextField';
 
+import AllTasksView from './AllTasksView.jsx';
 import ItemStack from './ItemStack.jsx';
 import InputTopicSelector from './InputTopicSelector.jsx';
 import LinearProgressWithLabel from './progress/LinearProgressWithLabel';
 import TopicsFilter from './TopicFilter.jsx';
-// import useDatabaseState from '../hooks/useDatabaseState.js';
-import useLocalStorageState from '../hooks/useLocalStorageState.js'; // TODO: use this when no connectivity
+import useLocalStorageState from '../hooks/useLocalStorageState.js';
 import ViewSelector from './ViewSelector.jsx';
 
 function calculatePanelProgress(tasks) {
@@ -69,17 +68,21 @@ function sendConfettiFromSides() {
 }
 
 export default function Panel({
+  addTask,
+  addTopic,
   allowInput = true,
+  allTasksView,
   confettiedPanels,
-  createTask,
-  data: { id: panelId, name: panelName, progress: panelProgress },
-  database,
   deleteTask,
-  moveTaskToPanel,
+  deleteTopic,
+  moveTaskToNextPanel,
+  moveTaskToPreviousPanel,
+  moveTaskToSelectedPanel,
+  panelData: { id: panelId, name: panelName, progress: panelProgress },
+  removeTaskFromPanel,
   setConfettiedPanels,
-  setTopics,
   tasksList = [],
-  topics,
+  topicsList,
   updatePanelMetadata,
   updateTask,
   userId,
@@ -96,39 +99,6 @@ export default function Panel({
     key: 'tasks:input-topic-name',
   });
 
-  // const [doneList, setDoneList] = useState(initialDoneList);
-  // const [todoList, setTodoList] = useState(initialTodoList);
-  // const formattedPanelName = panelName.toLowerCase().replaceAll(' ', '');
-  // const [doneList, setDoneList] = useLocalStorageState({
-  //   debounce: 200,
-  //   defaultValue: initialDoneList,
-  //   key: `${formattedPanelName}_doneList`,
-  // });
-  // const [todoList, setTodoList] = useLocalStorageState({
-  //   debounce: 200,
-  //   defaultValue: initialTodoList,
-  //   key: `${formattedPanelName}_todoList`,
-  // });
-
-  // const [tasksList, setTasksList] = useDatabaseState({
-  //   database,
-  //   dbPath: `/lists/${userId}/${panelId}`,
-  //   // debounce: 200,
-  //   defaultValue: initialTasksList,
-  // });
-
-  // const [doneList, setDoneList] = useDatabaseState({
-  //   database,
-  //   dbPath: `/lists/${userId}/${panelId}/done`,
-  //   // debounce: 200,
-  //   defaultValue: initialDoneList,
-  // });
-  // const [todoList, setTodoList] = useDatabaseState({
-  //   database,
-  //   dbPath: `/lists/${userId}/${panelId}/todo`,
-  //   // debounce: 200,
-  //   defaultValue: initialTodoList,
-  // });
   const [stacksCount, setStacksCount] = useLocalStorageState({
     defaultValue: 2,
     key: 'tasks:stacks-count',
@@ -140,68 +110,35 @@ export default function Panel({
       defaultValue: null,
       key: 'tasks:selected-topic-id-filter',
     });
-  const selectedTopicFilter = topics ? topics[selectedTopicFilterIndex] : null;
+  const selectedTopicFilter = topicsList
+    ? topicsList[selectedTopicFilterIndex]
+    : null;
 
   const [selectedInputTopicId, setSelectedInputTopicId] = useLocalStorageState({
     defaultValue: '',
     key: 'tasks:selected-input-topic-id',
   });
-  const selectedInputTopic = topics
-    ? topics.find((topic) => topic.id === selectedInputTopicId)
+  const selectedInputTopic = topicsList
+    ? topicsList.find((topic) => topic.id === selectedInputTopicId)
     : null;
 
   useEffect(() => {
     setSelectedInputTopicId(selectedTopicFilter?.id || '');
   }, [selectedTopicFilter, setSelectedInputTopicId]);
 
-  // const filteredTasksList = useMemo(() => {
-  //   return tasksList && selectedTopicFilter?.name
-  //     ? tasksList.filter(
-  //         (task) => task?.topic?.name === selectedTopicFilter.name
-  //       )
-  //     : tasksList;
-  // }, [selectedTopicFilter, tasksList]);
-  const filteredTasksList =
+  // Filter by topic
+  let filteredTasksList =
     tasksList && selectedTopicFilter?.name
       ? tasksList.filter(
           (task) => task?.topic?.name === selectedTopicFilter.name
         )
       : tasksList;
 
-  // const doneTasksList = useMemo(() => {
-  //   return filteredTasksList
-  //     ? filteredTasksList.filter((task) => task && task.status === 'done')
-  //     : [];
-  // }, [filteredTasksList]);
-  // const doneTasksList = filteredTasksList
-  //   ? filteredTasksList.filter((task) => task && task.status === 'done')
-  //   : [];
-
-  // const todoTasksList = useMemo(() => {
-  //   return filteredTasksList
-  //     ? filteredTasksList.filter(
-  //         (task) =>
-  //           (task && task.status === 'todo') ||
-  //           (!showDoingStack && task.status === 'doing')
-  //       )
-  //     : [];
-  // }, [filteredTasksList, showDoingStack]);
-  // const todoTasksList = filteredTasksList
-  //   ? filteredTasksList.filter(
-  //       (task) =>
-  //         (task && task.status === 'todo') ||
-  //         (!showDoingStack && task.status === 'doing')
-  //     )
-  //   : [];
-
-  // const doingTasksList = useMemo(() => {
-  //   return filteredTasksList
-  //     ? filteredTasksList.filter((task) => task && task.status === 'doing')
-  //     : [];
-  // }, [filteredTasksList]);
-  // const doingTasksList = filteredTasksList
-  //   ? filteredTasksList.filter((task) => task && task.status === 'doing')
-  //   : [];
+  // Filter by panel
+  filteredTasksList =
+    panelId && !allTasksView
+      ? filteredTasksList.filter((task) => task?.panelId === panelId)
+      : filteredTasksList;
 
   const [everCreatedTaskTitles, setEverCreatedTaskTitles] =
     useLocalStorageState({
@@ -238,45 +175,6 @@ export default function Panel({
     updatePanelMetadata,
   ]);
 
-  function createTopic(topicName) {
-    console.log('topicName:', topicName);
-    if (!topicName) return;
-    if (!topics || !topics.find((topic) => topic.name === topicName)) {
-      setTopics((topics) => {
-        console.log(`Creating topic with name ${topicName}`);
-        const newTopicData = {
-          dateCreated: Date.now(),
-          id: `topic-${uuidv4()}`,
-          name: topicName,
-        };
-        const updatedTopics = topics ? [...topics] : [];
-        updatedTopics.push(newTopicData);
-        return updatedTopics;
-      });
-      return true;
-    }
-  }
-
-  function deleteTopic(topicToDelete) {
-    if (!topicToDelete) return;
-    if (
-      window.confirm(
-        `Are you sure that you want to delete the topic ${topicToDelete.name}?`
-      )
-    ) {
-      setTopics((topics) => {
-        if (topics) {
-          console.log(`Deleting topic ${topicToDelete.name}`);
-          const updatedTopics = topics.filter(
-            (topic) => topic.id !== topicToDelete.id
-          );
-          return updatedTopics;
-        }
-      });
-      return true;
-    }
-  }
-
   return (
     <>
       {/* <Box
@@ -298,25 +196,29 @@ export default function Panel({
           marginRight: 'auto',
         }}
       >
-        <LinearProgressWithLabel hideLabel progress={panelProgress} />
+        <LinearProgressWithLabel hidelabel={1} progress={panelProgress} />
       </Box>
       <Box paddingTop="10px" paddingBottom="4px">
         <form
           onSubmit={(event) => {
             event.preventDefault();
             if (inputTaskTitle) {
-              const taskCreated = createTask(
+              const taskCreated = addTask(
                 inputTaskTitle,
-                selectedInputTopic
+                selectedInputTopic,
+                panelId
               );
-              if (!everCreatedTaskTitles.includes(inputTaskTitle)) {
-                setEverCreatedTaskTitles((everCreatedTaskTitles) => {
-                  const taskTitles = [...everCreatedTaskTitles, inputTaskTitle];
-                  while (taskTitles.length > 5) taskTitles.shift();
-                  return taskTitles;
-                });
-              }
               if (taskCreated) {
+                if (!everCreatedTaskTitles.includes(inputTaskTitle)) {
+                  setEverCreatedTaskTitles((everCreatedTaskTitles) => {
+                    const taskTitles = [
+                      ...everCreatedTaskTitles,
+                      inputTaskTitle,
+                    ];
+                    while (taskTitles.length > 5) taskTitles.shift();
+                    return taskTitles;
+                  });
+                }
                 setInputTaskTitle('');
               }
             }
@@ -326,7 +228,7 @@ export default function Panel({
             <InputTopicSelector
               selectedTopicId={selectedInputTopic ? selectedInputTopicId : ''}
               setSelectedTopicId={setSelectedInputTopicId}
-              topics={topics}
+              topicsList={topicsList}
             />
             <Autocomplete
               sx={{ width: '100%' }}
@@ -402,7 +304,7 @@ export default function Panel({
               deleteTopic={deleteTopic}
               selectedTopicFilterIndex={selectedTopicFilterIndex}
               setSelectedTopicFilterIndex={setSelectedTopicFilterIndex}
-              topics={topics}
+              topicsList={topicsList}
             />
           </Box>
           <Box
@@ -414,7 +316,7 @@ export default function Panel({
               onSubmit={(event) => {
                 event.preventDefault();
                 const topicName = event.target.topicName.value;
-                const creationStarted = createTopic(topicName);
+                const creationStarted = addTopic(topicName);
                 if (creationStarted) {
                   setInputTopicName('');
                 }
@@ -437,40 +339,25 @@ export default function Panel({
           </Box>
         </Box>
       </Box>
-
-      <div>
-        <Grid sx={{ flexGrow: 1 }} container spacing={2}>
-          <Grid item xs={showDoingStack ? 4 : 6} sx={{ paddingTop: 0 }}>
-            <ItemStack
-              moveTaskRight={(taskToUpdate) =>
-                updateTask(taskToUpdate, {
-                  status: showDoingStack ? 'doing' : 'done',
-                })
-              }
-              deleteTask={deleteTask}
-              list={
-                !filteredTasksList
-                  ? []
-                  : filteredTasksList.filter(
-                      (task) =>
-                        (task && task.status === 'todo') ||
-                        (!showDoingStack && task.status === 'doing')
-                    )
-              }
-              moveTaskToPanel={moveTaskToPanel}
-              showDoingStack={showDoingStack}
-              type="todo"
-            />
-          </Grid>
-          {showDoingStack ? (
-            <Grid item xs={4} sx={{ paddingTop: 0 }}>
+      {allTasksView ? (
+        <Box paddingTop="10px">
+          <AllTasksView
+            tasksList={filteredTasksList}
+            moveTaskToSelectedPanel={moveTaskToSelectedPanel}
+            userId={userId}
+          />
+        </Box>
+      ) : (
+        <div>
+          <Grid sx={{ flexGrow: 1 }} container spacing={2}>
+            <Grid item xs={showDoingStack ? 4 : 6} sx={{ paddingTop: 0 }}>
               <ItemStack
                 moveTaskRight={(taskToUpdate) =>
-                  updateTask(taskToUpdate, { status: 'done' })
-                }
-                moveTaskLeft={(taskToUpdate) =>
-                  updateTask(taskToUpdate, {
-                    status: 'todo',
+                  updateTask({
+                    taskId: taskToUpdate.id,
+                    updates: {
+                      status: showDoingStack ? 'doing' : 'done',
+                    },
                   })
                 }
                 deleteTask={deleteTask}
@@ -478,35 +365,78 @@ export default function Panel({
                   !filteredTasksList
                     ? []
                     : filteredTasksList.filter(
-                        (task) => task && task.status === 'doing'
+                        (task) =>
+                          (task && task.status === 'todo') ||
+                          (!showDoingStack && task.status === 'doing')
                       )
                 }
-                moveTaskToPanel={moveTaskToPanel}
+                moveTaskToNextPanel={moveTaskToNextPanel}
+                moveTaskToPreviousPanel={moveTaskToPreviousPanel}
+                removeTaskFromPanel={removeTaskFromPanel}
                 showDoingStack={showDoingStack}
-                type="doing"
+                type="todo"
               />
             </Grid>
-          ) : null}
-          <Grid item xs={showDoingStack ? 4 : 6} sx={{ paddingTop: 0 }}>
-            <ItemStack
-              moveTaskLeft={(taskToUpdate) =>
-                updateTask(taskToUpdate, {
-                  status: showDoingStack ? 'doing' : 'todo',
-                })
-              }
-              deleteTask={deleteTask}
-              list={
-                !filteredTasksList
-                  ? []
-                  : filteredTasksList.filter(
-                      (task) => task && task.status === 'done'
-                    )
-              }
-              type="done"
-            />
+            {showDoingStack ? (
+              <Grid item xs={4} sx={{ paddingTop: 0 }}>
+                <ItemStack
+                  moveTaskRight={(taskToUpdate) =>
+                    updateTask({
+                      taskId: taskToUpdate.id,
+                      updates: { status: 'done' },
+                    })
+                  }
+                  moveTaskLeft={(taskToUpdate) =>
+                    updateTask({
+                      taskId: taskToUpdate.id,
+                      updates: {
+                        status: 'todo',
+                      },
+                    })
+                  }
+                  deleteTask={deleteTask}
+                  list={
+                    !filteredTasksList
+                      ? []
+                      : filteredTasksList.filter(
+                          (task) => task && task.status === 'doing'
+                        )
+                  }
+                  moveTaskToNextPanel={moveTaskToNextPanel}
+                  moveTaskToPreviousPanel={moveTaskToPreviousPanel}
+                  removeTaskFromPanel={removeTaskFromPanel}
+                  showDoingStack={showDoingStack}
+                  type="doing"
+                />
+              </Grid>
+            ) : null}
+            <Grid item xs={showDoingStack ? 4 : 6} sx={{ paddingTop: 0 }}>
+              <ItemStack
+                moveTaskLeft={(taskToUpdate) =>
+                  updateTask({
+                    taskId: taskToUpdate.id,
+                    updates: {
+                      status: showDoingStack ? 'doing' : 'todo',
+                    },
+                  })
+                }
+                deleteTask={deleteTask}
+                list={
+                  !filteredTasksList
+                    ? []
+                    : filteredTasksList.filter(
+                        (task) => task && task.status === 'done'
+                      )
+                }
+                moveTaskToNextPanel={moveTaskToNextPanel}
+                moveTaskToPreviousPanel={moveTaskToPreviousPanel}
+                removeTaskFromPanel={removeTaskFromPanel}
+                type="done"
+              />
+            </Grid>
           </Grid>
-        </Grid>
-      </div>
+        </div>
+      )}
     </>
   );
 }
