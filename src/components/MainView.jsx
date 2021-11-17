@@ -1,99 +1,155 @@
 import { v4 as uuidv4 } from 'uuid';
-import { useEffect } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
-import { ref, update } from 'firebase/database';
 
 import Panel from './Panel.jsx';
 import PanelTabs from './PanelTabs.jsx';
-import useDatabaseState from '../hooks/useDatabaseState.js';
+import SaveButton from './SaveButton';
+
+import * as database from '../database/firebase.js';
 import useLocalStorageState from '../hooks/useLocalStorageState.js';
 
-export default function MainView({
-  database,
-  login,
-  loginEmailSent,
-  logout,
-  user,
-}) {
-  // const [panelsList, setPanelsList] = useLocalStorageState({
-  //   debounce: 400,
-  //   key: 'panelsList',
-  //   defaultValue: [
-  //     // { id: 'id1', name: 'Panel 1' },
-  //     // { id: 'id2', name: 'Panel 2' },
-  //     // { id: 'id3', name: 'Panel 3' },
-  //   ],
-  // });
+export default function MainView({ login, loginEmailSent, logout, user }) {
+  const [unsavedChanges, setUnsavedChanges] = useState({
+    panels: {},
+    tasks: {},
+    topics: {},
+  });
+
+  const [saveStatus, setSaveStatus] = useState('up-to-date'); // "up-to-date", "unsaved-changes", "saving" or "failed-to-save"
+
+  const [allTasksView, setAllTasksView] = useState(false);
 
   const [selectedTab, setSelectedTab] = useLocalStorageState({
-    defaultValue: 0,
+    // defaultValue: 0,
     key: `tasks:selected-tab`,
   });
 
-  const [
-    [panelsList, setPanelsList],
-    [tasksList, setTasksList],
-    [topics, setTopics],
-  ] = useLists({
-    database,
-    defaultValue: [],
-    selectedTab,
-    skippDatabaseUse: !user,
-    user,
-  });
+  const [panels, setPanels] = useState({});
+  const panelsList = useMemo(() => {
+    if (!panels) return [];
+    console.log('Recalculating panelsList...');
+    const newValue = objectToList(panels).sort(
+      (panel1, panel2) => panel1.dateCreated - panel2.dateCreated
+    );
+    console.log('panelsList newValue:', newValue);
+    return newValue;
+  }, [panels]);
 
   const [confettiedPanels, setConfettiedPanels] = useLocalStorageState({
     defaultValue: [],
     key: `tasks:confettied-panels`,
   });
 
-  // let dbPath;
-  // switch (selectedPanelId) {
-  //   case 'all':
-  //     dbPath = `/lists/${user?.uid}`;
-  //     break;
-  //   default:
-  //     dbPath = `/lists/${user?.uid}/${selectedPanelId}`;
-  // }
-  // console.log('dbPath:', dbPath);
+  const [topics, setTopics] = useState([]);
+
+  const [tasks, setTasks] = useState([]);
+
+  // Load lists from db on first render
+  useEffect(() => {
+    if (user) {
+      // panels
+      database
+        .getPanels({ filters: {}, userId: user?.uid })
+        .then((dbPanels) => {
+          setPanels(dbPanels);
+          setSelectedTab((selectedTab) => selectedTab);
+        })
+        .catch((err) => console.log(err));
+
+      // topics
+      database
+        .getTopics({ filters: {}, userId: user?.uid })
+        .then((dbTopics) => {
+          setTopics(dbTopics);
+        })
+        .catch((err) => console.log(err));
+
+      // tasks
+      database
+        .getTasks({ filters: {}, userId: user?.uid })
+        .then((dbTasks) => {
+          console.log('dbTasks:', dbTasks);
+          setTasks(dbTasks);
+        })
+        .catch((err) => console.log(err));
+    }
+  }, []);
+
+  // Alert on unsaved changes and unloading page
+  useEffect(() => {
+    const beforeUnloadListener = (event) => {
+      event.preventDefault();
+      if (unsavedChangedExist(unsavedChanges)) {
+        return (event.returnValue = 'Are you sure that you want to exit?');
+      }
+    };
+
+    window.addEventListener('beforeunload', beforeUnloadListener, {
+      capture: true,
+    });
+    return () => {
+      window.removeEventListener('beforeunload', beforeUnloadListener, {
+        capture: true,
+      });
+    };
+  }, [unsavedChanges]);
+
+  const unsavedChangesRef = useRef(unsavedChanges);
+  useEffect(() => {
+    unsavedChangesRef.current = unsavedChanges;
+  }, [unsavedChanges]);
+
+  // Check if there is any unsaved work
+  useEffect(() => {
+    if (unsavedChangedExist(unsavedChanges)) {
+      setSaveStatus('unsaved-changes');
+    }
+  }, [unsavedChanges]);
+
+  // Set interval to perform updates on db where needed
+  useEffect(() => {
+    const intervalId = setInterval(saveData, 30000);
+    return () => clearInterval(intervalId);
+  }, []);
 
   useEffect(() => {
     if (!user) {
       // Save anonymous user data in localStorage
-      if (panelsList?.length > 0) {
+      if (panels && Object.keys(panels).length > 0) {
         window.localStorage.setItem(
-          'tasks:anonymous-panels-list',
-          JSON.stringify(panelsList)
+          'tasks:anonymous-panels',
+          JSON.stringify(panels)
         );
       }
-      if (tasksList?.length > 0) {
+      if (tasks && Object.keys(tasks).length > 0) {
         window.localStorage.setItem(
           'tasks:anonymous-tasks-list',
-          JSON.stringify(tasksList)
+          JSON.stringify(tasks)
         );
       }
-      if (topics?.length > 0) {
+      if (topics && Object.keys(topics).length > 0) {
         window.localStorage.setItem(
-          'tasks:anonymous-topics',
+          'tasks:anonymous-topics-list',
           JSON.stringify(topics)
         );
       }
     }
-  }, [panelsList, tasksList, topics, user]);
+  }, [panels, tasks, topics, user]);
 
+  // TODO: UPDATE THIS
   useEffect(() => {
     if (user) {
       const isFirstTimeUserResult = isFirstTimeUser(user);
-      // console.log('isFirstTimeUserResult:', isFirstTimeUserResult);
       if (isFirstTimeUserResult) {
         // Load user data that was previously anonymous
-        const { panelsList, tasksList, topics } =
-          getLocalStorageAnonymousLists();
-        if (panelsList) setPanelsList(panelsList);
-        if (tasksList) setTasksList(tasksList);
+        const { panels, tasks, topics } = getLocalStorageAnonymousLists();
+
+        if (panels) setPanels(panels);
+        if (tasks) setTasks(tasks);
         if (topics) setTopics(topics);
       }
     }
@@ -102,86 +158,65 @@ export default function MainView({
         clearLocalStorageAnonymousLists();
       }
     };
-  }, [setPanelsList, setTasksList, setTopics, user]);
-
-  // useEffect(() => {
-  //   if (!dbPath || dbPath.includes('undefined')) return;
-  //   console.log('AQUI dbPath changed:', dbPath);
-  //   // Subscribe to db changes
-  //   const stateRef = ref(database, dbPath);
-  //   const calcelSubscription = onValue(stateRef, (snapshot) => {
-  //     // const updatedState = snapshot.val() || [];
-  //     const updatedState = snapshot.val();
-  //     if (!updatedState) return;
-  //     console.log(
-  //       `AQUI New value from database. Updating local ${dbPath}: ${JSON.stringify(
-  //         updatedState
-  //       )}`
-  //     );
-  //     setTasksList(updatedState);
-  //   });
-  //   return () => {
-  //     console.log('AQUI calcelSubscription:', calcelSubscription);
-  //     calcelSubscription();
-  //     setTasksList(null);
-  //   };
-  //   // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, [dbPath]);
-
-  // useEffect(() => {
-  //   if (!tasksList || dbPath.includes('undefined')) return;
-  //   console.log('AQUI2 dbPath:', dbPath);
-  //   console.log('AQUI2 tasksList:', tasksList);
-  //   //   console.log('HERE1 dbPath:', dbPath);
-  //   //   console.log('HERE1 state:', state);
-  //   //   if (state && JSON.stringify(state) !== JSON.stringify(defaultValue)) {
-  //   //     // Update db
-  //   const updates = {};
-  //   updates[dbPath] = tasksList;
-  //   console.log(`Updating ${dbPath}: ${JSON.stringify(updates)}`);
-  //   update(ref(database), updates);
-  //   //   }
-  //   // return () => {
-  //   // };
-  // }, [database, tasksList]);
+    // }, [setPanelsList, setTasks, setTopics, user]);
+  }, [user]);
 
   // PANEL OPERATIONS
-  function updatePanelMetadata({ panelId, updates }) {
-    const { progress } = updates;
-    setPanelsList((panelsList) => {
-      const foundPanelIndex = panelsList.findIndex(
-        (panel) => panel.id === panelId
-      );
-      const foundPanelData = panelsList[foundPanelIndex];
-      const updatedPanel = { ...foundPanelData };
-      updatedPanel.progress = progress;
-      const updatedPanelList = [...panelsList];
-      // updatedPanelList[foundPanelIndex].progress = progress;
-      updatedPanelList[foundPanelIndex] = updatedPanel;
-      return updatedPanelList;
-    });
-  }
 
-  function createPanel(panelName) {
+  // TODO: adapt this logic to new db operations
+  // function updatePanelMetadata({ panelId, updates }) {
+  // const { progress } = updates;
+  // setPanelsList((panelsList) => {
+  //   const foundPanelIndex = panelsList.findIndex(
+  //     (panel) => panel.id === panelId
+  //   );
+  //   const foundPanelData = panelsList[foundPanelIndex];
+  //   const updatedPanel = { ...foundPanelData };
+  //   updatedPanel.progress = progress;
+  //   const updatedPanelList = [...panelsList];
+  //   // updatedPanelList[foundPanelIndex].progress = progress;
+  //   updatedPanelList[foundPanelIndex] = updatedPanel;
+  //   return updatedPanelList;
+  // });
+  // }
+
+  function addPanel(panelName, panelData) {
     if (
-      panelsList &&
-      panelsList.find(
+      panels &&
+      Object.values(panels).find(
         (panel) => panel.name.toLowerCase() === panelName.toLowerCase()
       )
     ) {
       console.log(`There is already a panel with the name ${panelName}`);
     } else {
-      console.log(`Creating panel ${panelName}`);
-      const updatedPanelsList = panelsList ? [...panelsList] : [];
-      const newPanelMetadata = {
+      console.log(`Adding panel ${panelName}`);
+
+      const dateNow = Date.now();
+      let newPanelMetadata = {
         id: `panel-${uuidv4()}`,
         name: panelName,
         progress: { real: 0, potential: 0 },
+        dateCreated: dateNow,
+        dateCreated: dateNow,
+        dateDeleted: 0,
       };
-      updatedPanelsList.push(newPanelMetadata);
-      setPanelsList(updatedPanelsList);
-      const newPanelIndex = updatedPanelsList.length - 1;
-      return newPanelIndex;
+
+      // Use panel data if provided as argument
+      if (panelData) {
+        newPanelMetadata = { ...newPanelMetadata, ...panelData };
+      }
+
+      setPanels((panels) => {
+        const updatedPanels = { ...panels };
+        updatedPanels[newPanelMetadata.id] = newPanelMetadata;
+        return updatedPanels;
+      });
+      setUnsavedChanges((unsavedChanges) => {
+        const newUpdatedItems = { ...unsavedChanges };
+        newUpdatedItems['panels'][newPanelMetadata.id] = newPanelMetadata;
+        return newUpdatedItems;
+      });
+      return true;
     }
   }
 
@@ -192,131 +227,340 @@ export default function MainView({
       )
     ) {
       console.log(`Deleting panel ${panelToDelete.name} (${panelToDelete.id})`);
-      if (
-        selectedTab === panelsList.length - 1 &&
-        panelsList[selectedTab].id === panelToDelete.id
-      ) {
-        setSelectedTab(0);
+
+      if (panelsList.length > 1 && selectedTab > 0) {
+        setSelectedTab(selectedTab - 1);
       }
-      const updatedPanelsList = panelsList.filter(
-        (panel) => panel.id !== panelToDelete.id
-      );
-      setPanelsList(updatedPanelsList);
+
+      updatePanel({
+        panelId: panelToDelete.id,
+        updates: { dateDeleted: Date.now() },
+      });
       setConfettiedPanels((confettiedPanels) =>
         confettiedPanels.filter((panelId) => panelId !== panelToDelete.id)
       );
     }
+    return true;
   }
 
-  function moveTaskToPanel({ task, originPanelIndex, targetPanelIndex }) {
-    if (!targetPanelIndex || targetPanelIndex >= panelsList.length)
-      return false;
+  function updatePanel({ panelId, updates }) {
+    if (!panelId || !updates || !Object.keys(updates).length) return;
 
-    // Update target panel tasks
-    const targetPanel = panelsList[targetPanelIndex];
-    const tasksTarget = []; // TODO: fetch real values
-    const updatedTasksTarget = [...tasksTarget, task];
-    const dbPathTarget = `lists/${user?.uid}/${targetPanel.id}`;
+    setPanels((panels) => {
+      const panelToUpdate = panels[panelId];
+      if (!panelToUpdate) {
+        console.log(`Panel ${panelId} can't be updated. It doesn't exist`);
+        return panels;
+      } else {
+        const updatedPanels = { ...panels };
+        const updatedPanel = {
+          ...panelToUpdate,
+          ...updates,
+          dateModified: Date.now(),
+        };
+        updatedPanels[panelId] = updatedPanel;
 
-    //Update origin panel tasks
-    const originPanel = panelsList[originPanelIndex];
-    const tasksOrigin = []; // TODO: fetch real values
-    const updatedTasksOrigin = tasksOrigin.filter(
-      (originTask) => originTask.id !== task.id
-    );
-    const dbPathOrigin = `lists/${user?.uid}/${originPanel.id}`;
+        setUnsavedChanges((unsavedChanges) => {
+          const newUpdatedItems = { ...unsavedChanges };
+          newUpdatedItems['panels'][panelId] = updatedPanel;
+          return newUpdatedItems;
+        });
+        return updatedPanels;
+      }
+    });
+    return true;
+  }
 
-    const updates = {};
-    updates[dbPathTarget] = updatedTasksTarget;
-    updates[dbPathOrigin] = updatedTasksOrigin;
-    console.log(
-      `Updating ${dbPathTarget}: ${JSON.stringify(updatedTasksTarget)}`
-    );
-    console.log(
-      `Updating ${dbPathOrigin}: ${JSON.stringify(updatedTasksOrigin)}`
-    );
-    update(ref(database), updates);
+  // TOPIC OPERATIONS
+  function addTopic(topicName) {
+    if (!topicName) return;
+    if (
+      !topics ||
+      !Object.values(topics).find((topic) => topic.name === topicName)
+    ) {
+      console.log(`Adding topic with name ${topicName}`);
+
+      const dateNow = Date.now();
+      const newTopicData = {
+        dateCreated: dateNow,
+        dateDeleted: 0,
+        dateModified: dateNow,
+        id: `topic-${uuidv4()}`,
+        name: topicName,
+      };
+
+      setTopics((topics) => {
+        const updatedTopics = { ...topics };
+        updatedTopics[newTopicData.id] = newTopicData;
+        return updatedTopics;
+      });
+
+      setUnsavedChanges((unsavedChanges) => {
+        const newUpdatedItems = { ...unsavedChanges };
+        newUpdatedItems['topics'][newTopicData.id] = newTopicData;
+        return newUpdatedItems;
+      });
+
+      return true;
+    }
+  }
+
+  function deleteTopic(topicToDelete) {
+    if (!topicToDelete) return;
+    if (
+      window.confirm(
+        `Are you sure that you want to delete the topic ${topicToDelete.name}?`
+      )
+    ) {
+      console.log(`Deleting topic ${topicToDelete.name}`);
+
+      updateTopic({
+        topicId: topicToDelete.id,
+        updates: { dateDeleted: Date.now() },
+      });
+      return true;
+    }
+  }
+
+  function updateTopic({ topicId, updates }) {
+    if (!topicId || !updates || !Object.keys(updates).length) return;
+
+    setTopics((topics) => {
+      const topicToUpdate = topics[topicId];
+      if (!topicToUpdate) {
+        console.log(`Topic ${topicId} can't be updated. It doesn't exist`);
+        return topics;
+      } else {
+        const updatedTopics = { ...topics };
+        const updatedTopic = {
+          ...topicToUpdate,
+          ...updates,
+          dateModified: Date.now(),
+        };
+        updatedTopics[topicId] = updatedTopic;
+
+        setUnsavedChanges((unsavedChanges) => {
+          const newUpdatedItems = { ...unsavedChanges };
+          newUpdatedItems['topics'][topicId] = updatedTopic;
+          return newUpdatedItems;
+        });
+        return updatedTopics;
+      }
+    });
+
+    return true;
   }
 
   // TASK OPERATIONS
-  function createTask(taskTitle, topic) {
-    const foundTask = findTaskTitle(taskTitle);
+  function addTask(taskTitle, topic, panelId) {
+    const foundTask =
+      tasks &&
+      Object.values(tasks).find((task) => {
+        return !task.dateDeleted && task.title === taskTitle;
+      });
+
     if (foundTask) {
       console.log(
-        `There is already a task with the title ${taskTitle} in the '${foundTask.status}' list`
+        `There is already a task with the title ${taskTitle} (id ${foundTask.id})`
       );
+      return false;
     } else {
-      console.log(`Creating task ${taskTitle}`);
-      const task = {
-        dateCreated: Date.now(),
-        dateModified: Date.now(),
-        id: uuidv4(),
-        status: 'todo',
-        title: taskTitle,
-        topic: topic || null,
-      };
-      console.log('task:', task);
-      setTasksList((tasksList) => (tasksList ? [...tasksList, task] : [task]));
-      return task;
+      setTasks((tasks) => {
+        console.log(`Adding task ${taskTitle}`);
+
+        const dateNow = Date.now();
+        const newTaskData = {
+          dateCreated: dateNow,
+          dateModified: dateNow,
+          dateDeleted: 0,
+          id: uuidv4(),
+          status: 'todo',
+          title: taskTitle,
+          topic: topic || null,
+          panelId,
+        };
+        console.log('newTaskData:', newTaskData);
+
+        const updatedTasks = { ...tasks };
+        updatedTasks[newTaskData.id] = newTaskData;
+
+        setUnsavedChanges((unsavedChanges) => {
+          const newUpdatedItems = { ...unsavedChanges };
+          newUpdatedItems['tasks'][newTaskData.id] = newTaskData;
+          return newUpdatedItems;
+        });
+
+        return updatedTasks;
+      });
+      return true;
     }
   }
 
   function deleteTask(taskToDelete) {
+    if (!taskToDelete) return;
     console.log(`Deleting task "${taskToDelete.title}" (${taskToDelete.id})`);
-    setTasksList((tasksList) =>
-      tasksList.filter((task) => task.id !== taskToDelete.id)
-    );
+
+    updateTask({
+      taskId: taskToDelete.id,
+      updates: { dateDeleted: Date.now() },
+    });
+
+    return true;
   }
 
-  function findTaskTitle(taskTitle) {
-    if (!tasksList) return false;
-    const foundTask = tasksList.find(
-      (task) => task?.title?.toLowerCase() === taskTitle.toLowerCase()
-    );
-    return foundTask;
-  }
+  function updateTask({ taskId, updates }) {
+    if (!taskId || !updates || !Object.keys(updates).length) return;
 
-  function updateTask(taskToUpdate, updates = {}) {
-    console.log(
-      `Updating task "${taskToUpdate.title}" (${
-        taskToUpdate.id
-      }): ${JSON.stringify(updates)}`
-    );
+    console.log(`Updating task "${taskId}": ${JSON.stringify(updates)}`);
 
-    setTasksList((tasksList) => {
-      const foundTaskIndex = tasksList.findIndex(
-        (task) => task.id === taskToUpdate.id
-      );
-      if (foundTaskIndex === -1) {
-        console.log(
-          `Task ${taskToUpdate.title} (${taskToUpdate.id}) doesn't seem to exist in this panel`
-        );
-        return tasksList;
+    setTasks((tasks) => {
+      const taskToUpdate = tasks[taskId];
+      if (!taskToUpdate) {
+        console.log(`Task ${taskId} can't be updated. It doesn't exist`);
+        return tasks;
+      } else {
+        const updatedTasks = { ...tasks };
+        const updatedTask = {
+          ...taskToUpdate,
+          ...updates,
+          dateModified: Date.now(),
+        };
+        updatedTasks[taskId] = updatedTask;
+
+        setUnsavedChanges((unsavedChanges) => {
+          const newUpdatedItems = { ...unsavedChanges };
+          newUpdatedItems['tasks'][taskId] = updatedTask;
+          return newUpdatedItems;
+        });
+        return updatedTasks;
       }
-      const foundTask = tasksList[foundTaskIndex];
-      const updatedTask = {
-        ...foundTask,
-        ...updates,
-        dateModified: Date.now(),
-      };
-      const updatedTasksList = [...tasksList];
-      updatedTasksList[foundTaskIndex] = updatedTask;
-      return updatedTasksList;
+    });
+    return true;
+  }
+
+  function moveTaskToPanel({ task: taskToMove, destinationPanel }) {
+    if (!taskToMove || !destinationPanel) return;
+
+    let panelId;
+    switch (destinationPanel) {
+      case 'next':
+        panelId = panelsList[selectedTab + 1]?.id;
+        break;
+      case 'none':
+        panelId = null;
+        break;
+      case 'previous':
+        panelId = panelsList[selectedTab - 1]?.id;
+        break;
+      case 'selected':
+        if (selectedTab && panelsList[selectedTab]) {
+          panelId = panelsList[selectedTab]?.id;
+        }
+        break;
+      default:
+        break;
+    }
+    if (!panelId && destinationPanel !== 'none') {
+      console.log(
+        `Invalid moveTaskToPanel destinationPanel: ${destinationPanel}`
+      );
+      return;
+    }
+
+    console.log(`Moving task to ${destinationPanel} panel, with id ${panelId}`);
+
+    updateTask({
+      taskId: taskToMove.id,
+      updates: {
+        panelId,
+      },
     });
   }
 
-  // function objectToArray(obj) {
-  //   if (!obj) return [];
-  //   return Object.values(obj).reduce((previousValue, currentValue) => {
-  //     return [...previousValue, ...currentValue];
-  //   }, []);
-  // }
+  async function saveData() {
+    console.log('Checking if any changes to save...');
+    const {
+      panels: panelsToUpdate,
+      tasks: tasksToUpdate,
+      topics: topicsToUpdate,
+    } = unsavedChangesRef.current;
+    let remainingPanels = { ...panelsToUpdate };
+    let remainingTasks = { ...tasksToUpdate };
+    let remainingTopics = { ...topicsToUpdate };
+
+    if (panelsToUpdate && Object.keys(panelsToUpdate).length > 0) {
+      if (saveStatus !== 'saving') setSaveStatus('saving');
+      // set updated panels
+      console.log('panels require syncup');
+      console.log('panelsToUpdate:', panelsToUpdate);
+      for (const panelId in panelsToUpdate) {
+        const panel = panelsToUpdate[panelId];
+        console.log('panel:', panel);
+        try {
+          await database.setPanel({ panelId, panel, userId: user?.uid });
+          delete remainingPanels[panelId];
+        } catch (err) {
+          console.log(`Error updating panel ${panelId}:`, err);
+        }
+      }
+    } else if (tasksToUpdate && Object.keys(tasksToUpdate).length > 0) {
+      if (saveStatus !== 'saving') setSaveStatus('saving');
+      // set updated tasks
+      for (const taskId in tasksToUpdate) {
+        const task = tasksToUpdate[taskId];
+        try {
+          await database.setTask({ taskId, task, userId: user?.uid });
+          delete remainingTasks[taskId];
+        } catch (err) {
+          console.log(`Error updating task ${taskId}:`, err);
+        }
+      }
+    } else if (topicsToUpdate && Object.keys(topicsToUpdate).length > 0) {
+      if (saveStatus !== 'saving') setSaveStatus('saving');
+      // set updated topics
+      console.log('topics require syncup');
+      console.log('topicsToUpdate:', topicsToUpdate);
+      for (const topicId in topicsToUpdate) {
+        const topic = topicsToUpdate[topicId];
+        console.log('topic:', topic);
+        try {
+          await database.setTopic({ topicId, topic, userId: user?.uid });
+          delete remainingTopics[topicId];
+        } catch (err) {
+          console.log(`Error updating topic ${topicId}:`, err);
+        }
+      }
+    } else {
+      console.log('Nothing to update');
+    }
+
+    if (
+      Object.keys(remainingPanels).length ||
+      Object.keys(remainingTasks).length ||
+      Object.keys(remainingTopics).length
+    ) {
+      setTimeout(() => {
+        setSaveStatus('failed-to-save');
+      }, 1200);
+    } else {
+      setTimeout(() => {
+        setSaveStatus('up-to-date');
+      }, 1200);
+    }
+
+    const remainingItems = {
+      panels: remainingPanels,
+      tasks: remainingTasks,
+      topics: remainingTopics,
+    };
+    console.log('Remaining items:', JSON.stringify(remainingItems, null, 4));
+    setUnsavedChanges(remainingItems);
+  }
 
   return (
     <Container maxWidth="md">
-      {/* <Container maxWidth="sm"> */}
       {/* <img src={logo} className="App-logo" alt="logo" /> */}
-      <Box display="flex" justifyContent="right">
+      <Box display="flex" justifyContent="flex-end" marginTop="2px">
         <Box
           color="rgb(102,102,102)"
           fontSize="15px"
@@ -330,14 +574,28 @@ export default function MainView({
             : `Log in to save your data`}
         </Box>
         {user ? (
-          <Button onClick={logout} size="small">
-            Logout
-          </Button>
+          <>
+            <Button onClick={logout} size="small">
+              Logout
+            </Button>
+            <Box
+              sx={{
+                // m: 1,
+                position: 'relative',
+              }}
+            >
+              <SaveButton saveData={saveData} saveStatus={saveStatus} />
+            </Box>
+          </>
         ) : (
           <Button
             disabled={Boolean(loginEmailSent)}
             onClick={() => {
-              const anonymousUserDataToSave = { panelsList, tasksList, topics };
+              const anonymousUserDataToSave = {
+                panels,
+                tasks,
+                topics,
+              };
               login(anonymousUserDataToSave);
             }}
             size="small"
@@ -349,130 +607,114 @@ export default function MainView({
       {loginEmailSent ? null : (
         <>
           <PanelTabs
-            createPanel={createPanel}
+            addPanel={addPanel}
+            allTasksView={allTasksView}
             deletePanel={deletePanel}
-            panelsList={panelsList || []}
+            panelsList={panelsList.filter((panel) => !panel.dateDeleted)}
             selectedTab={selectedTab}
+            setAllTasksView={setAllTasksView}
             setSelectedTab={setSelectedTab}
             userId={user?.uid}
           />
-          {panelsList
-            ? panelsList.map((panelData, index) =>
-                selectedTab === index ? (
-                  <Panel
-                    // allowInput={selectedPanelId !== 'all'}
-                    confettiedPanels={confettiedPanels}
-                    createTask={createTask}
-                    database={database}
-                    data={panelData}
-                    deleteTask={deleteTask}
-                    key={panelData.id}
-                    moveTaskToPanel={(task) =>
-                      moveTaskToPanel({
-                        task,
-                        originPanelIndex: index,
-                        targetPanelIndex: index + 1,
-                      })
-                    }
-                    setConfettiedPanels={setConfettiedPanels}
-                    setTopics={setTopics}
-                    tasksList={
-                      tasksList
-                        ? [...tasksList].sort(
-                            (task1, task2) =>
-                              task1.dateModified - task2.dateModified
-                          )
-                        : null
-                    }
-                    // tasksList={
-                    //   selectedPanelId !== 'all'
-                    //   tasksList
-                    //   Array.isArray(tasksList)
-                    //     ? tasksList
-                    //     : objectToArray(tasksList)
-                    // }
-                    topics={topics}
-                    updatePanelMetadata={(updates) =>
-                      updatePanelMetadata({
-                        panelId: panelData.id,
-                        updates,
-                      })
-                    }
-                    updateTask={updateTask}
-                    userId={user?.uid}
-                  />
-                ) : null
-              )
-            : null}
+          {panels && panelsList[selectedTab] ? (
+            <Panel
+              addTask={addTask}
+              addTopic={addTopic}
+              allTasksView={allTasksView}
+              confettiedPanels={confettiedPanels}
+              deleteTask={deleteTask}
+              deleteTopic={deleteTopic}
+              moveTaskToNextPanel={
+                panelsList && selectedTab && panelsList.length > selectedTab + 1
+                  ? (task) =>
+                      moveTaskToPanel({ task, destinationPanel: 'next' })
+                  : null
+              }
+              moveTaskToPreviousPanel={(task) =>
+                panelsList && selectedTab && panelsList.length > selectedTab - 1
+                  ? moveTaskToPanel({ task, destinationPanel: 'previous' })
+                  : null
+              }
+              moveTaskToSelectedPanel={
+                selectedTab && panelsList[selectedTab]
+                  ? (task) =>
+                      moveTaskToPanel({ task, destinationPanel: 'selected' })
+                  : null
+              }
+              removeTaskFromPanel={
+                selectedTab && panelsList[selectedTab]
+                  ? (task) =>
+                      moveTaskToPanel({ task, destinationPanel: 'none' })
+                  : null
+              }
+              panelData={panelsList[selectedTab]}
+              setConfettiedPanels={setConfettiedPanels}
+              tasksList={objectToList(tasks)
+                .filter((task) => !task.dateDeleted)
+                .sort(
+                  (task1, task2) => task1.dateModified - task2.dateModified
+                )}
+              topicsList={objectToList(topics)
+                .filter((topic) => !topic.dateDeleted)
+                .sort(
+                  (topic1, topic2) => topic1.dateCreated - topic2.dateCreated
+                )}
+              updatePanelMetadata={
+                () => {}
+                // allTasksView
+                //   ? () => {}
+                //   : (updates) =>
+                //       updatePanelMetadata({
+                //         panelId: panelsList[selectedTab].id,
+                //         updates,
+                //       })
+              }
+              updateTask={updateTask}
+              userId={user?.uid}
+            />
+          ) : null}
         </>
       )}
-      {/* ) : null} */}
     </Container>
   );
 }
 
-function useLists({
-  database,
-  defaultValue = [],
-  selectedTab,
-  skipDatabaseUse,
-  user,
-}) {
-  const [panelsList, setPanelsList] = useDatabaseState({
-    database,
-    dbPath: `panels/${user?.uid}`,
-    debounce: 100,
-    defaultValue,
-    // defaultValue: [{ id: 'all', name: 'all' }],
-    skipDatabaseUse,
-  });
-
-  const selectedPanelId = panelsList ? panelsList[selectedTab]?.id : undefined;
-  const [tasksList, setTasksList] = useDatabaseState({
-    database,
-    dbPath: `/lists/${user?.uid}/${selectedPanelId}`,
-    debounce: 100,
-    defaultValue,
-    skipDatabaseUse,
-  });
-
-  const [topics, setTopics] = useDatabaseState({
-    database,
-    dbPath: `topics/${user?.uid}`,
-    debounce: 100,
-    defaultValue,
-    skipDatabaseUse,
-  });
-
-  return [
-    [panelsList, setPanelsList],
-    [tasksList, setTasksList],
-    [topics, setTopics],
-  ];
-}
-
 function clearLocalStorageAnonymousLists() {
-  window.localStorage.removeItem('tasks:anonymous-panels-list');
+  window.localStorage.removeItem('tasks:anonymous-panels');
   window.localStorage.removeItem('tasks:anonymous-tasks-list');
-  window.localStorage.removeItem('tasks:anonymous-topics');
+  window.localStorage.removeItem('tasks:anonymous-topics-list');
 }
 
 function getLocalStorageAnonymousLists() {
-  const panelsList = JSON.parse(
-    window.localStorage.getItem('tasks:anonymous-panels-list')
+  const panels = JSON.parse(
+    window.localStorage.getItem('tasks:anonymous-panels')
   );
-  const tasksList = JSON.parse(
+  const tasks = JSON.parse(
     window.localStorage.getItem('tasks:anonymous-tasks-list')
   );
   const topics = JSON.parse(
-    window.localStorage.getItem('tasks:anonymous-topics')
+    window.localStorage.getItem('tasks:anonymous-topics-list')
   );
 
-  return { panelsList, tasksList, topics };
+  return { panels, tasks, topics };
 }
 
 function isFirstTimeUser(user) {
   if (!user?.metadata) return false;
   const { createdAt, lastLoginAt } = user.metadata;
   return Math.abs(createdAt - lastLoginAt) < 120000;
+}
+
+function objectToList(obj) {
+  if (!obj) return [];
+  return Object.values(obj);
+}
+
+function unsavedChangedExist(unsavedChanges) {
+  return (
+    unsavedChanges &&
+    ((unsavedChanges.panels && Object.keys(unsavedChanges.panels).length) ||
+      (unsavedChanges.topics && Object.keys(unsavedChanges.topics).length) ||
+      (unsavedChanges.tasks && Object.keys(unsavedChanges.tasks).length))
+  );
 }
