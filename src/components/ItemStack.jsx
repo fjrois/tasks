@@ -13,12 +13,13 @@ import Stack from '@mui/material/Stack';
 import ListItem from './ListItem';
 
 export default function ItemStack({
-  handleItemClick,
   deleteTask,
   list = [],
-  moveTaskToPanel,
   moveTaskLeft,
   moveTaskRight,
+  moveTaskToNextPanel,
+  moveTaskToPreviousPanel,
+  removeTaskFromPanel,
   showDoingStack,
   type: listType,
 }) {
@@ -37,18 +38,6 @@ export default function ItemStack({
     title = 'Doing';
   }
 
-  // const loadedListRef = useRef(list.length === 0 ? [] : [list[0]]);
-
-  // useEffect(() => {
-  //   console.log('loadedListRef.current:', loadedListRef.current);
-  //   if (loadedListRef.current.length < list) {
-  //     loadedListRef.current = [
-  //       ...loadedListRef.current,
-  //       list[loadedListRef.current.length + 1],
-  //     ];
-  //   }
-  // });
-
   const [firstRender, setFirstRender] = useState(true);
   useEffect(() => {
     setFirstRender(false);
@@ -60,11 +49,12 @@ export default function ItemStack({
         backgroundColor={itemBackgroundColor}
         defaultElevation={defaultElevation}
         deleteTask={() => deleteTask(task)}
-        handleOnClick={() => handleItemClick(task)}
         isMobile={isMobile}
         moveTaskLeft={moveTaskLeft}
         moveTaskRight={moveTaskRight}
-        moveTaskToPanel={moveTaskToPanel}
+        moveTaskToNextPanel={moveTaskToNextPanel}
+        moveTaskToPreviousPanel={moveTaskToPreviousPanel}
+        removeTaskFromPanel={removeTaskFromPanel}
         task={task}
       />
     );
@@ -74,11 +64,8 @@ export default function ItemStack({
     <Box display="flex" flexDirection="column" alignItems="center">
       <Box
         sx={{
-          // display: 'flex',
-          // flexWrap: 'wrap',
           '& > :not(style)': {
             m: 1,
-            // width: 128,
             height: 28,
             textAlign: 'center',
           },
