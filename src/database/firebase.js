@@ -62,15 +62,14 @@ export function setItem({ collectionName, itemId, item, userId }) {
 }
 
 // PANELS
-function addPanel() {}
-
-function deletePanel() {}
+// function addPanel() {}
+// function deletePanel() {}
+// function updatePanel() {}
 
 export async function getPanels({ filters, userId }) {
   return getItems({ collectionName: 'panels', filters, userId });
 }
 
-function updatePanel() {}
 export function setPanel({ panelId, panel, userId }) {
   return setItem({
     collectionName: 'panels',
@@ -81,11 +80,13 @@ export function setPanel({ panelId, panel, userId }) {
 }
 
 // TOPICS
-function deleteTopic() {}
+// function deleteTopic() {}
+// export function updateTopic() {}
 
 export async function getTopics({ filters, userId }) {
   return getItems({ collectionName: 'topics', filters, userId });
 }
+
 export function setTopic({ topicId, topic, userId }) {
   return setItem({
     collectionName: 'topics',
@@ -95,14 +96,14 @@ export function setTopic({ topicId, topic, userId }) {
   });
 }
 
-export function updateTopic() {}
-
 // TASKS
-function deleteTask() {}
+// function deleteTask() {}
+// function updateTask() {}
 
 export async function getTasks({ filters, userId }) {
   return getItems({ collectionName: 'tasks', filters, userId });
 }
+
 export function setTask({ taskId, task, userId }) {
   return setItem({
     collectionName: 'tasks',
@@ -111,5 +112,3 @@ export function setTask({ taskId, task, userId }) {
     userId,
   });
 }
-
-function updateTask() {}
