@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -77,7 +77,7 @@ export default function MainView({ login, loginEmailSent, logout, user }) {
         })
         .catch((err) => console.log(err));
     }
-  }, []);
+  }, [setSelectedTab, user]);
 
   // Alert on unsaved changes and unloading page
   useEffect(() => {
@@ -110,11 +110,94 @@ export default function MainView({ login, loginEmailSent, logout, user }) {
     }
   }, [unsavedChanges]);
 
+  const saveData = useCallback(
+    async function saveData() {
+      console.log('Checking if any changes to save...');
+      const {
+        panels: panelsToUpdate,
+        tasks: tasksToUpdate,
+        topics: topicsToUpdate,
+      } = unsavedChangesRef.current;
+      let remainingPanels = { ...panelsToUpdate };
+      let remainingTasks = { ...tasksToUpdate };
+      let remainingTopics = { ...topicsToUpdate };
+
+      if (panelsToUpdate && Object.keys(panelsToUpdate).length > 0) {
+        if (saveStatus !== 'saving') setSaveStatus('saving');
+        // set updated panels
+        console.log('panels require syncup');
+        console.log('panelsToUpdate:', panelsToUpdate);
+        for (const panelId in panelsToUpdate) {
+          const panel = panelsToUpdate[panelId];
+          console.log('panel:', panel);
+          try {
+            await database.setPanel({ panelId, panel, userId: user?.uid });
+            delete remainingPanels[panelId];
+          } catch (err) {
+            console.log(`Error updating panel ${panelId}:`, err);
+          }
+        }
+      } else if (tasksToUpdate && Object.keys(tasksToUpdate).length > 0) {
+        if (saveStatus !== 'saving') setSaveStatus('saving');
+        // set updated tasks
+        for (const taskId in tasksToUpdate) {
+          const task = tasksToUpdate[taskId];
+          try {
+            await database.setTask({ taskId, task, userId: user?.uid });
+            delete remainingTasks[taskId];
+          } catch (err) {
+            console.log(`Error updating task ${taskId}:`, err);
+          }
+        }
+      } else if (topicsToUpdate && Object.keys(topicsToUpdate).length > 0) {
+        if (saveStatus !== 'saving') setSaveStatus('saving');
+        // set updated topics
+        console.log('topics require syncup');
+        console.log('topicsToUpdate:', topicsToUpdate);
+        for (const topicId in topicsToUpdate) {
+          const topic = topicsToUpdate[topicId];
+          console.log('topic:', topic);
+          try {
+            await database.setTopic({ topicId, topic, userId: user?.uid });
+            delete remainingTopics[topicId];
+          } catch (err) {
+            console.log(`Error updating topic ${topicId}:`, err);
+          }
+        }
+      } else {
+        console.log('Nothing to update');
+      }
+
+      if (
+        Object.keys(remainingPanels).length ||
+        Object.keys(remainingTasks).length ||
+        Object.keys(remainingTopics).length
+      ) {
+        setTimeout(() => {
+          setSaveStatus('failed-to-save');
+        }, 1200);
+      } else {
+        setTimeout(() => {
+          setSaveStatus('up-to-date');
+        }, 1200);
+      }
+
+      const remainingItems = {
+        panels: remainingPanels,
+        tasks: remainingTasks,
+        topics: remainingTopics,
+      };
+      console.log('Remaining items:', JSON.stringify(remainingItems, null, 4));
+      setUnsavedChanges(remainingItems);
+    },
+    [saveStatus, user]
+  );
+
   // Set interval to perform updates on db where needed
   useEffect(() => {
     const intervalId = setInterval(saveData, 30000);
     return () => clearInterval(intervalId);
-  }, []);
+  }, [saveData]);
 
   useEffect(() => {
     if (!user) {
@@ -197,7 +280,7 @@ export default function MainView({ login, loginEmailSent, logout, user }) {
         name: panelName,
         progress: { real: 0, potential: 0 },
         dateCreated: dateNow,
-        dateCreated: dateNow,
+        dateModified: dateNow,
         dateDeleted: 0,
       };
 
@@ -475,86 +558,6 @@ export default function MainView({ login, loginEmailSent, logout, user }) {
         panelId,
       },
     });
-  }
-
-  async function saveData() {
-    console.log('Checking if any changes to save...');
-    const {
-      panels: panelsToUpdate,
-      tasks: tasksToUpdate,
-      topics: topicsToUpdate,
-    } = unsavedChangesRef.current;
-    let remainingPanels = { ...panelsToUpdate };
-    let remainingTasks = { ...tasksToUpdate };
-    let remainingTopics = { ...topicsToUpdate };
-
-    if (panelsToUpdate && Object.keys(panelsToUpdate).length > 0) {
-      if (saveStatus !== 'saving') setSaveStatus('saving');
-      // set updated panels
-      console.log('panels require syncup');
-      console.log('panelsToUpdate:', panelsToUpdate);
-      for (const panelId in panelsToUpdate) {
-        const panel = panelsToUpdate[panelId];
-        console.log('panel:', panel);
-        try {
-          await database.setPanel({ panelId, panel, userId: user?.uid });
-          delete remainingPanels[panelId];
-        } catch (err) {
-          console.log(`Error updating panel ${panelId}:`, err);
-        }
-      }
-    } else if (tasksToUpdate && Object.keys(tasksToUpdate).length > 0) {
-      if (saveStatus !== 'saving') setSaveStatus('saving');
-      // set updated tasks
-      for (const taskId in tasksToUpdate) {
-        const task = tasksToUpdate[taskId];
-        try {
-          await database.setTask({ taskId, task, userId: user?.uid });
-          delete remainingTasks[taskId];
-        } catch (err) {
-          console.log(`Error updating task ${taskId}:`, err);
-        }
-      }
-    } else if (topicsToUpdate && Object.keys(topicsToUpdate).length > 0) {
-      if (saveStatus !== 'saving') setSaveStatus('saving');
-      // set updated topics
-      console.log('topics require syncup');
-      console.log('topicsToUpdate:', topicsToUpdate);
-      for (const topicId in topicsToUpdate) {
-        const topic = topicsToUpdate[topicId];
-        console.log('topic:', topic);
-        try {
-          await database.setTopic({ topicId, topic, userId: user?.uid });
-          delete remainingTopics[topicId];
-        } catch (err) {
-          console.log(`Error updating topic ${topicId}:`, err);
-        }
-      }
-    } else {
-      console.log('Nothing to update');
-    }
-
-    if (
-      Object.keys(remainingPanels).length ||
-      Object.keys(remainingTasks).length ||
-      Object.keys(remainingTopics).length
-    ) {
-      setTimeout(() => {
-        setSaveStatus('failed-to-save');
-      }, 1200);
-    } else {
-      setTimeout(() => {
-        setSaveStatus('up-to-date');
-      }, 1200);
-    }
-
-    const remainingItems = {
-      panels: remainingPanels,
-      tasks: remainingTasks,
-      topics: remainingTopics,
-    };
-    console.log('Remaining items:', JSON.stringify(remainingItems, null, 4));
-    setUnsavedChanges(remainingItems);
   }
 
   return (
