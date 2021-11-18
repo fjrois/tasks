@@ -54,6 +54,7 @@ export default function ListItem({
         // } else {
         if (
           !isMobile &&
+          deleteTask &&
           (event.button === 1 || (event.button === 0 && event.shiftKey))
         ) {
           deleteTask(task);
@@ -71,11 +72,11 @@ export default function ListItem({
         setShowIcons(false);
       }}
     >
-      {moveTaskToNextPanel || moveTaskToPreviousPanel ? (
+      {deleteTask || moveTaskToNextPanel || moveTaskToPreviousPanel ? (
         <Box position="absolute" top="8%" right="5%">
           <ListItemActionsButton
             color={showIcons ? '' : 'transparent'}
-            deleteTask={deleteTask}
+            deleteTask={deleteTask ? () => deleteTask(task) : null}
             moveTaskToNextPanel={
               moveTaskToNextPanel ? () => moveTaskToNextPanel(task) : null
             }
