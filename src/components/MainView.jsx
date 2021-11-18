@@ -86,7 +86,7 @@ export default function MainView({ login, loginEmailSent, logout, user }) {
         })
         .catch((err) => console.log(err));
     }
-  }, [setPanels, setSelectedTab, user]);
+  }, [setPanels, setSelectedTab, setTasks, setTopics, user]);
 
   // Alert on unsaved changes and unloading page
   useEffect(() => {
@@ -259,7 +259,7 @@ export default function MainView({ login, loginEmailSent, logout, user }) {
       }
     };
     // }, [setPanelsList, setTasks, setTopics, user]);
-  }, [setPanels, user]);
+  }, [setPanels, setTasks, setTopics, user]);
 
   return (
     <Container maxWidth="md">
