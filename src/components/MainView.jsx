@@ -43,9 +43,9 @@ export default function MainView({ login, loginEmailSent, logout, user }) {
     setUnsavedChanges,
   });
 
-  const [topics, setTopics] = useState([]);
+  const [topics, setTopics] = useState({});
 
-  const [tasks, setTasks] = useState([]);
+  const [tasks, setTasks] = useState({});
 
   // Load lists from db on first render
   useEffect(() => {
