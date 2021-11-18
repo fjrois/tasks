@@ -261,25 +261,6 @@ export default function MainView({ login, loginEmailSent, logout, user }) {
     // }, [setPanelsList, setTasks, setTopics, user]);
   }, [setPanels, user]);
 
-  // PANEL OPERATIONS
-
-  // TODO: adapt this logic to new db operations
-  // function updatePanelMetadata({ panelId, updates }) {
-  // const { progress } = updates;
-  // setPanelsList((panelsList) => {
-  //   const foundPanelIndex = panelsList.findIndex(
-  //     (panel) => panel.id === panelId
-  //   );
-  //   const foundPanelData = panelsList[foundPanelIndex];
-  //   const updatedPanel = { ...foundPanelData };
-  //   updatedPanel.progress = progress;
-  //   const updatedPanelList = [...panelsList];
-  //   // updatedPanelList[foundPanelIndex].progress = progress;
-  //   updatedPanelList[foundPanelIndex] = updatedPanel;
-  //   return updatedPanelList;
-  // });
-  // }
-
   return (
     <Container maxWidth="md">
       {/* <img src={logo} className="App-logo" alt="logo" /> */}

@@ -113,5 +113,22 @@ export default function usePanels({
     return true;
   }
 
+  // TODO: adapt this logic to new db operations
+  // function updatePanelMetadata({ panelId, updates }) {
+  // const { progress } = updates;
+  // setPanelsList((panelsList) => {
+  //   const foundPanelIndex = panelsList.findIndex(
+  //     (panel) => panel.id === panelId
+  //   );
+  //   const foundPanelData = panelsList[foundPanelIndex];
+  //   const updatedPanel = { ...foundPanelData };
+  //   updatedPanel.progress = progress;
+  //   const updatedPanelList = [...panelsList];
+  //   // updatedPanelList[foundPanelIndex].progress = progress;
+  //   updatedPanelList[foundPanelIndex] = updatedPanel;
+  //   return updatedPanelList;
+  // });
+  // }
+
   return { panels, panelsList, setPanels, addPanel, updatePanel, deletePanel };
 }
