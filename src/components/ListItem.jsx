@@ -124,8 +124,6 @@ export default function ListItem({
 
         <Box
           sx={{
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
             overflow: 'hidden',
           }}
         >
