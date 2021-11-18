@@ -35,14 +35,13 @@ export default function MainView({ login, loginEmailSent, logout, user }) {
     key: `tasks:confettied-panels`,
   });
 
-  const { panels, panelsList, setPanels, addPanel, updatePanel, deletePanel } =
-    usePanels({
-      defaultValue: {},
-      selectedTab,
-      setConfettiedPanels,
-      setSelectedTab,
-      setUnsavedChanges,
-    });
+  const { panels, panelsList, setPanels, addPanel, deletePanel } = usePanels({
+    defaultValue: {},
+    selectedTab,
+    setConfettiedPanels,
+    setSelectedTab,
+    setUnsavedChanges,
+  });
 
   const [topics, setTopics] = useState([]);
 
@@ -77,7 +76,7 @@ export default function MainView({ login, loginEmailSent, logout, user }) {
         })
         .catch((err) => console.log(err));
     }
-  }, [setSelectedTab, user]);
+  }, [setPanels, setSelectedTab, user]);
 
   // Alert on unsaved changes and unloading page
   useEffect(() => {
@@ -250,7 +249,7 @@ export default function MainView({ login, loginEmailSent, logout, user }) {
       }
     };
     // }, [setPanelsList, setTasks, setTopics, user]);
-  }, [user]);
+  }, [setPanels, user]);
 
   // PANEL OPERATIONS
 
