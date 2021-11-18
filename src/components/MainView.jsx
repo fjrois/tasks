@@ -122,46 +122,54 @@ export default function MainView({ login, loginEmailSent, logout, user }) {
       let remainingTasks = { ...tasksToUpdate };
       let remainingTopics = { ...topicsToUpdate };
 
-      if (panelsToUpdate && Object.keys(panelsToUpdate).length > 0) {
-        if (saveStatus !== 'saving') setSaveStatus('saving');
-        // set updated panels
-        console.log('panels require syncup');
-        console.log('panelsToUpdate:', panelsToUpdate);
-        for (const panelId in panelsToUpdate) {
-          const panel = panelsToUpdate[panelId];
-          console.log('panel:', panel);
-          try {
-            await database.setPanel({ panelId, panel, userId: user?.uid });
-            delete remainingPanels[panelId];
-          } catch (err) {
-            console.log(`Error updating panel ${panelId}:`, err);
+      if (
+        (panelsToUpdate && Object.keys(panelsToUpdate).length > 0) ||
+        (tasksToUpdate && Object.keys(tasksToUpdate).length > 0) ||
+        (topicsToUpdate && Object.keys(topicsToUpdate).length > 0)
+      ) {
+        if (panelsToUpdate && Object.keys(panelsToUpdate).length > 0) {
+          if (saveStatus !== 'saving') setSaveStatus('saving');
+          // set updated panels
+          console.log('panels require syncup');
+          console.log('panelsToUpdate:', panelsToUpdate);
+          for (const panelId in panelsToUpdate) {
+            const panel = panelsToUpdate[panelId];
+            console.log('panel:', panel);
+            try {
+              await database.setPanel({ panelId, panel, userId: user?.uid });
+              delete remainingPanels[panelId];
+            } catch (err) {
+              console.log(`Error updating panel ${panelId}:`, err);
+            }
           }
         }
-      } else if (tasksToUpdate && Object.keys(tasksToUpdate).length > 0) {
-        if (saveStatus !== 'saving') setSaveStatus('saving');
-        // set updated tasks
-        for (const taskId in tasksToUpdate) {
-          const task = tasksToUpdate[taskId];
-          try {
-            await database.setTask({ taskId, task, userId: user?.uid });
-            delete remainingTasks[taskId];
-          } catch (err) {
-            console.log(`Error updating task ${taskId}:`, err);
+        if (tasksToUpdate && Object.keys(tasksToUpdate).length > 0) {
+          if (saveStatus !== 'saving') setSaveStatus('saving');
+          // set updated tasks
+          for (const taskId in tasksToUpdate) {
+            const task = tasksToUpdate[taskId];
+            try {
+              await database.setTask({ taskId, task, userId: user?.uid });
+              delete remainingTasks[taskId];
+            } catch (err) {
+              console.log(`Error updating task ${taskId}:`, err);
+            }
           }
         }
-      } else if (topicsToUpdate && Object.keys(topicsToUpdate).length > 0) {
-        if (saveStatus !== 'saving') setSaveStatus('saving');
-        // set updated topics
-        console.log('topics require syncup');
-        console.log('topicsToUpdate:', topicsToUpdate);
-        for (const topicId in topicsToUpdate) {
-          const topic = topicsToUpdate[topicId];
-          console.log('topic:', topic);
-          try {
-            await database.setTopic({ topicId, topic, userId: user?.uid });
-            delete remainingTopics[topicId];
-          } catch (err) {
-            console.log(`Error updating topic ${topicId}:`, err);
+        if (topicsToUpdate && Object.keys(topicsToUpdate).length > 0) {
+          if (saveStatus !== 'saving') setSaveStatus('saving');
+          // set updated topics
+          console.log('topics require syncup');
+          console.log('topicsToUpdate:', topicsToUpdate);
+          for (const topicId in topicsToUpdate) {
+            const topic = topicsToUpdate[topicId];
+            console.log('topic:', topic);
+            try {
+              await database.setTopic({ topicId, topic, userId: user?.uid });
+              delete remainingTopics[topicId];
+            } catch (err) {
+              console.log(`Error updating topic ${topicId}:`, err);
+            }
           }
         }
       } else {
@@ -365,11 +373,11 @@ export default function MainView({ login, loginEmailSent, logout, user }) {
 
       const dateNow = Date.now();
       const newTopicData = {
-        dateCreated: dateNow,
-        dateDeleted: 0,
-        dateModified: dateNow,
         id: `topic-${uuidv4()}`,
         name: topicName,
+        dateCreated: dateNow,
+        dateModified: dateNow,
+        dateDeleted: 0,
       };
 
       setTopics((topics) => {
