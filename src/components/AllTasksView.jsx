@@ -1,6 +1,10 @@
 import Box from '@mui/material/Box';
 
+import Masonry from 'react-masonry-css';
+
 import ListItem from './ListItem';
+
+import './AllTasksView.css';
 
 export default function AllTasksView({ tasksList, moveTaskToSelectedPanel }) {
   const sortedTasksList = tasksList
@@ -11,16 +15,19 @@ export default function AllTasksView({ tasksList, moveTaskToSelectedPanel }) {
 
   return (
     <>
-      <Box
-        display="flex"
-        flexWrap="wrap"
-        // justifyContent="space-between"
-        columnGap="16px"
-        rowGap="10px"
+      <Masonry
+        breakpointCols={{
+          default: 4,
+          846: 3,
+          641: 2,
+          428: 1,
+        }}
+        className="masonry-grid"
+        columnClassName="masonry-grid_column"
       >
         {sortedTasksList.map((task) => {
           return (
-            <Box key={task.id} width="200px">
+            <Box key={task.id}>
               <ListItem
                 backgroundColor={getBackgroundColor(task.status)}
                 handleOnClick={
@@ -35,7 +42,7 @@ export default function AllTasksView({ tasksList, moveTaskToSelectedPanel }) {
             </Box>
           );
         })}
-      </Box>
+      </Masonry>
     </>
   );
 }

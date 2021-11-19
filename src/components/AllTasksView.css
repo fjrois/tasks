@@ -1,0 +1,16 @@
+.masonry-grid {
+  display: -webkit-box; /* Not needed if autoprefixing */
+  display: -ms-flexbox; /* Not needed if autoprefixing */
+  display: flex;
+  width: auto;
+  gap: 10px;
+}
+
+/* .masonry-grid_column { */
+/* background-clip: padding-box; */
+/* } */
+
+/* Style your items */
+.masonry-grid_column > div {
+  margin-bottom: 10px;
+}
