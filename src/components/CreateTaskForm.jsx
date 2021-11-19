@@ -11,7 +11,7 @@ import useLocalStorageState from '../hooks/useLocalStorageState.js';
 
 export default function CreateTaskForm({
   addTask,
-  allowInput,
+  allowInput = true,
   selectedInputTopicId,
   setSelectedInputTopicId,
   topicsList,
