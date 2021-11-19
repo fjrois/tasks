@@ -1,8 +1,16 @@
 import { v4 as uuidv4 } from 'uuid';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+
+import { objectToList } from '../utils.js';
 
 export default function useTopics({ defaultValue = {}, setUnsavedChanges }) {
   const [topics, setTopics] = useState(defaultValue);
+
+  const topicsList = useMemo(() => {
+    return objectToList(topics)
+      .filter((topic) => !topic.dateDeleted)
+      .sort((topic1, topic2) => topic1.dateCreated - topic2.dateCreated);
+  }, [topics]);
 
   function addTopic(topicName) {
     if (!topicName) return;
@@ -83,5 +91,5 @@ export default function useTopics({ defaultValue = {}, setUnsavedChanges }) {
     return true;
   }
 
-  return { topics, setTopics, addTopic, deleteTopic };
+  return { topics, topicsList, setTopics, addTopic, deleteTopic };
 }
