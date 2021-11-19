@@ -4,6 +4,7 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
 
+import LinearProgressWithLabel from './progress/LinearProgressWithLabel';
 import Panel from './Panel.jsx';
 import PanelTabs from './PanelTabs.jsx';
 import SaveButton from './SaveButton';
@@ -320,6 +321,16 @@ export default function MainView({ login, loginEmailSent, logout, user }) {
             setSelectedTab={setSelectedTab}
             userId={user?.uid}
           />
+          <Box
+            sx={{
+              marginTop: '9px',
+              width: '99%',
+              marginLeft: 'auto',
+              marginRight: 'auto',
+            }}
+          >
+            <LinearProgressWithLabel hidelabel={1} progress={0} />
+          </Box>
           {panels && panelsList[selectedTab] ? (
             <Panel
               addTask={addTask}
