@@ -1,13 +1,17 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
+import TextField from '@mui/material/TextField';
 
+import CreateTaskForm from './CreateTaskForm.jsx';
 import LinearProgressWithLabel from './progress/LinearProgressWithLabel';
 import Panel from './Panel.jsx';
 import PanelTabs from './PanelTabs.jsx';
 import SaveButton from './SaveButton';
+import TopicsFilter from './TopicFilter.jsx';
+import ViewSelector from './ViewSelector.jsx';
 
 import * as database from '../database/firebase.js';
 import useLocalStorageState from '../hooks/useLocalStorageState.js';
@@ -45,7 +49,13 @@ export default function MainView({ login, loginEmailSent, logout, user }) {
     setUnsavedChanges,
   });
 
-  const { topics, setTopics, addTopic, deleteTopic } = useTopics({
+  const selectedPanel = useMemo(() => {
+    return panelsList && (selectedTab || selectedTab === 0)
+      ? panelsList[selectedTab]
+      : null;
+  }, [panelsList, selectedTab]);
+
+  const { topics, topicsList, setTopics, addTopic, deleteTopic } = useTopics({
     defaultValue: {},
     setUnsavedChanges,
   });
@@ -57,6 +67,31 @@ export default function MainView({ login, loginEmailSent, logout, user }) {
       selectedTab,
       setUnsavedChanges,
     });
+
+  const [inputTopicName, setInputTopicName] = useLocalStorageState({
+    debounce: true,
+    defaultValue: '',
+    key: 'tasks:input-topic-name',
+  });
+
+  const [stacksCount, setStacksCount] = useLocalStorageState({
+    defaultValue: 2,
+    key: 'tasks:stacks-count',
+  });
+
+  const [selectedTopicFilterIndex, setSelectedTopicFilterIndex] =
+    useLocalStorageState({
+      defaultValue: null,
+      key: 'tasks:selected-topic-id-filter',
+    });
+
+  const [selectedInputTopicId, setSelectedInputTopicId] = useLocalStorageState({
+    defaultValue: '',
+    key: 'tasks:selected-input-topic-id',
+  });
+  const selectedInputTopic = topicsList
+    ? topicsList.find((topic) => topic.id === selectedInputTopicId)
+    : null;
 
   // Load lists from db on first render
   useEffect(() => {
@@ -331,62 +366,130 @@ export default function MainView({ login, loginEmailSent, logout, user }) {
           >
             <LinearProgressWithLabel hidelabel={1} progress={0} />
           </Box>
-          {panels && panelsList[selectedTab] ? (
-            <Panel
-              addTask={addTask}
-              addTopic={addTopic}
-              allTasksView={allTasksView}
-              confettiedPanels={confettiedPanels}
-              deleteTask={deleteTask}
-              deleteTopic={deleteTopic}
-              moveTaskToNextPanel={
-                panelsList && selectedTab && panelsList.length > selectedTab + 1
-                  ? (task) =>
-                      moveTaskToPanel({ task, destinationPanel: 'next' })
-                  : null
-              }
-              moveTaskToPreviousPanel={(task) =>
-                panelsList && selectedTab && panelsList.length > selectedTab - 1
-                  ? moveTaskToPanel({ task, destinationPanel: 'previous' })
-                  : null
-              }
-              moveTaskToSelectedPanel={
-                selectedTab && panelsList[selectedTab]
-                  ? (task) =>
-                      moveTaskToPanel({ task, destinationPanel: 'selected' })
-                  : null
-              }
-              removeTaskFromPanel={
-                selectedTab && panelsList[selectedTab]
-                  ? (task) =>
-                      moveTaskToPanel({ task, destinationPanel: 'none' })
-                  : null
-              }
-              panelData={panelsList[selectedTab]}
-              setConfettiedPanels={setConfettiedPanels}
-              tasksList={objectToList(tasks)
-                .filter((task) => !task.dateDeleted)
-                .sort(
-                  (task1, task2) => task1.dateModified - task2.dateModified
-                )}
-              topicsList={objectToList(topics)
-                .filter((topic) => !topic.dateDeleted)
-                .sort(
-                  (topic1, topic2) => topic1.dateCreated - topic2.dateCreated
-                )}
-              updatePanelMetadata={
-                () => {}
-                // allTasksView
-                //   ? () => {}
-                //   : (updates) =>
-                //       updatePanelMetadata({
-                //         panelId: panelsList[selectedTab].id,
-                //         updates,
-                //       })
-              }
-              updateTask={updateTask}
-              userId={user?.uid}
-            />
+          <CreateTaskForm
+            addTask={({ taskTitle }) =>
+              addTask({
+                taskTitle,
+                topic: selectedInputTopic,
+                panelId: selectedPanel.id,
+              })
+            }
+            selectedInputTopicId={selectedInputTopicId}
+            setSelectedInputTopicId={setSelectedInputTopicId}
+            topicsList={topicsList}
+          />
+          <Box
+            marginTop="10px"
+            sx={{
+              display: 'flex',
+              flexFlow: 'row wrap',
+              justifyContent: 'space-between',
+              gap: '10px',
+            }}
+          >
+            <Box display="flex">
+              <ViewSelector
+                setStacksCount={setStacksCount}
+                stacksCount={stacksCount}
+              />
+              <TopicsFilter
+                deleteTopic={deleteTopic}
+                selectedTopicFilterIndex={selectedTopicFilterIndex}
+                setSelectedTopicFilterIndex={setSelectedTopicFilterIndex}
+                topicsList={topicsList}
+              />
+            </Box>
+            <Box
+              sx={{
+                width: '22.9%',
+              }}
+            >
+              <form
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  const topicName = event.target.topicName.value;
+                  const creationStarted = addTopic(topicName);
+                  if (creationStarted) {
+                    setInputTopicName('');
+                  }
+                }}
+              >
+                <TextField
+                  name="topicName"
+                  onChange={(event) => {
+                    let value = event.target.value;
+                    if (value.length === 1) {
+                      value = value.toUpperCase();
+                    }
+                    setInputTopicName(value);
+                  }}
+                  label="Add Topic"
+                  size="small"
+                  value={inputTopicName}
+                />
+              </form>
+            </Box>
+          </Box>
+          {panels && selectedPanel ? (
+            <>
+              <Panel
+                addTopic={addTopic}
+                allTasksView={allTasksView}
+                confettiedPanels={confettiedPanels}
+                deleteTask={deleteTask}
+                deleteTopic={deleteTopic}
+                moveTaskToNextPanel={
+                  panelsList &&
+                  selectedTab &&
+                  panelsList.length > selectedTab + 1
+                    ? (task) =>
+                        moveTaskToPanel({ task, destinationPanel: 'next' })
+                    : null
+                }
+                moveTaskToPreviousPanel={(task) =>
+                  panelsList &&
+                  selectedTab &&
+                  panelsList.length > selectedTab - 1
+                    ? moveTaskToPanel({ task, destinationPanel: 'previous' })
+                    : null
+                }
+                moveTaskToSelectedPanel={
+                  selectedTab && selectedPanel
+                    ? (task) =>
+                        moveTaskToPanel({ task, destinationPanel: 'selected' })
+                    : null
+                }
+                removeTaskFromPanel={
+                  selectedTab && selectedPanel
+                    ? (task) =>
+                        moveTaskToPanel({ task, destinationPanel: 'none' })
+                    : null
+                }
+                setSelectedInputTopicId={setSelectedInputTopicId}
+                stacksCount={stacksCount}
+                panelData={selectedPanel}
+                selectedTopicFilterIndex={selectedTopicFilterIndex}
+                setConfettiedPanels={setConfettiedPanels}
+                tasksList={objectToList(tasks)
+                  .filter((task) => !task.dateDeleted)
+                  .sort(
+                    (task1, task2) => task1.dateModified - task2.dateModified
+                  )}
+                topicsList={topicsList}
+                updatePanelMetadata={
+                  () => {}
+                  // allTasksView
+                  //   ? () => {}
+                  //   : (updates) =>
+                  //       updatePanelMetadata({
+                  //         panelId: selectedPanel.id,
+                  //         updates,
+                  //       })
+                }
+                updateTask={updateTask}
+                userId={user?.uid}
+              />
+            </>
           ) : null}
         </>
       )}
