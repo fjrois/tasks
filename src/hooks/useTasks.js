@@ -10,7 +10,7 @@ export default function useTasks({
   const [tasks, setTasks] = useState(defaultValue);
 
   // TASK OPERATIONS
-  function addTask(taskTitle, topic, panelId) {
+  function addTask({ taskTitle, topic, panelId }) {
     const foundTask =
       tasks &&
       Object.values(tasks).find((task) => {
