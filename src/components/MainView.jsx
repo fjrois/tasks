@@ -440,27 +440,30 @@ export default function MainView({ login, loginEmailSent, logout, user }) {
                 deleteTopic={deleteTopic}
                 moveTaskToNextPanel={
                   panelsList &&
-                  selectedTab &&
+                  selectedPanel &&
+                  selectedTab < panelsList.length - 1 &&
                   panelsList.length > selectedTab + 1
                     ? (task) =>
                         moveTaskToPanel({ task, destinationPanel: 'next' })
                     : null
                 }
-                moveTaskToPreviousPanel={(task) =>
+                moveTaskToPreviousPanel={
                   panelsList &&
-                  selectedTab &&
+                  selectedPanel &&
+                  selectedTab > 0 &&
                   panelsList.length > selectedTab - 1
-                    ? moveTaskToPanel({ task, destinationPanel: 'previous' })
+                    ? (task) =>
+                        moveTaskToPanel({ task, destinationPanel: 'previous' })
                     : null
                 }
                 moveTaskToSelectedPanel={
-                  selectedTab && selectedPanel
+                  selectedPanel
                     ? (task) =>
                         moveTaskToPanel({ task, destinationPanel: 'selected' })
                     : null
                 }
                 removeTaskFromPanel={
-                  selectedTab && selectedPanel
+                  selectedPanel
                     ? (task) =>
                         moveTaskToPanel({ task, destinationPanel: 'none' })
                     : null
