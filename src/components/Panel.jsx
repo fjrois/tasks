@@ -138,9 +138,11 @@ export default function Panel({
               allPanelsView ? moveTaskToSelectedPanel : null
             }
             userId={userId}
-            moveTaskToNextPanel={moveTaskToNextPanel}
-            moveTaskToPreviousPanel={moveTaskToPreviousPanel}
-            removeTaskFromPanel={removeTaskFromPanel}
+            moveTaskToNextPanel={!allPanelsView ? moveTaskToNextPanel : null}
+            moveTaskToPreviousPanel={
+              !allPanelsView ? moveTaskToPreviousPanel : null
+            }
+            removeTaskFromPanel={!allPanelsView ? removeTaskFromPanel : null}
           />
         </Box>
       ) : (
