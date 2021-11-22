@@ -10,11 +10,12 @@ import Tooltip from '@mui/material/Tooltip';
 
 export default function PanelTabs({
   addPanel,
-  allTasksView,
+  allPanelsView,
   deletePanel,
   panelsList,
   selectedTab = 0,
-  setAllTasksView,
+  setAllPanelsView,
+  setMasonryView,
   setSelectedTab,
   userId,
 }) {
@@ -34,9 +35,14 @@ export default function PanelTabs({
                 maxHeight: '40px',
               }}
               // value="check"
-              selected={allTasksView}
+              selected={allPanelsView}
               onChange={() => {
-                setAllTasksView((allTasksView) => !allTasksView);
+                setAllPanelsView((allPanelsView) => {
+                  const updatedAllPanelsView = !allPanelsView;
+                  const updtatedMasonryView = updatedAllPanelsView;
+                  setMasonryView(updtatedMasonryView);
+                  return updatedAllPanelsView;
+                });
                 setSelectedTab(panelsList.length - 1);
               }}
             >
@@ -44,7 +50,7 @@ export default function PanelTabs({
             </ToggleButton>
           </Box>
         </Grid>
-        {allTasksView ? (
+        {allPanelsView ? (
           <Grid item xs={10.5} />
         ) : (
           <>

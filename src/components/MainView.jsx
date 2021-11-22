@@ -29,7 +29,8 @@ export default function MainView({ login, loginEmailSent, logout, user }) {
 
   const [saveStatus, setSaveStatus] = useState('up-to-date'); // "up-to-date", "unsaved-changes", "saving" or "failed-to-save"
 
-  const [allTasksView, setAllTasksView] = useState(false);
+  const [allPanelsView, setAllPanelsView] = useState(false);
+  const [masonryView, setMasonryView] = useState(false);
 
   const [selectedTab, setSelectedTab] = useLocalStorageState({
     // defaultValue: 0,
@@ -348,11 +349,12 @@ export default function MainView({ login, loginEmailSent, logout, user }) {
         <>
           <PanelTabs
             addPanel={addPanel}
-            allTasksView={allTasksView}
+            allPanelsView={allPanelsView}
             deletePanel={deletePanel}
             panelsList={panelsList.filter((panel) => !panel.dateDeleted)}
             selectedTab={selectedTab}
-            setAllTasksView={setAllTasksView}
+            setAllPanelsView={setAllPanelsView}
+            setMasonryView={setMasonryView}
             setSelectedTab={setSelectedTab}
             userId={user?.uid}
           />
@@ -389,6 +391,8 @@ export default function MainView({ login, loginEmailSent, logout, user }) {
           >
             <Box display="flex">
               <ViewSelector
+                masonryView={masonryView}
+                setMasonryView={setMasonryView}
                 setStacksCount={setStacksCount}
                 stacksCount={stacksCount}
               />
@@ -434,7 +438,8 @@ export default function MainView({ login, loginEmailSent, logout, user }) {
             <>
               <Panel
                 addTopic={addTopic}
-                allTasksView={allTasksView}
+                allPanelsView={allPanelsView}
+                masonryView={masonryView}
                 confettiedPanels={confettiedPanels}
                 deleteTask={deleteTask}
                 deleteTopic={deleteTopic}
@@ -481,7 +486,7 @@ export default function MainView({ login, loginEmailSent, logout, user }) {
                 topicsList={topicsList}
                 updatePanelMetadata={
                   () => {}
-                  // allTasksView
+                  // allPanelsView
                   //   ? () => {}
                   //   : (updates) =>
                   //       updatePanelMetadata({

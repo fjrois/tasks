@@ -4,7 +4,7 @@ import confetti from 'canvas-confetti';
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
 
-import AllTasksView from './AllTasksView.jsx';
+import MasonryView from './MasonryView.jsx';
 import ItemStack from './ItemStack.jsx';
 
 function calculatePanelProgress(tasks) {
@@ -56,9 +56,10 @@ function sendConfettiFromSides() {
 }
 
 export default function Panel({
-  allTasksView,
+  allPanelsView,
   confettiedPanels,
   deleteTask,
+  masonryView,
   moveTaskToNextPanel,
   moveTaskToPreviousPanel,
   moveTaskToSelectedPanel,
@@ -94,7 +95,7 @@ export default function Panel({
 
   // Filter by panel
   filteredTasksList =
-    panelId && !allTasksView
+    panelId && !allPanelsView
       ? filteredTasksList.filter((task) => task?.panelId === panelId)
       : filteredTasksList;
 
@@ -128,12 +129,18 @@ export default function Panel({
 
   return (
     <>
-      {allTasksView ? (
+      {masonryView ? (
         <Box paddingTop="10px">
-          <AllTasksView
+          <MasonryView
+            deleteTask={deleteTask}
             tasksList={filteredTasksList}
-            moveTaskToSelectedPanel={moveTaskToSelectedPanel}
+            moveTaskToSelectedPanel={
+              allPanelsView ? moveTaskToSelectedPanel : null
+            }
             userId={userId}
+            moveTaskToNextPanel={moveTaskToNextPanel}
+            moveTaskToPreviousPanel={moveTaskToPreviousPanel}
+            removeTaskFromPanel={removeTaskFromPanel}
           />
         </Box>
       ) : (
