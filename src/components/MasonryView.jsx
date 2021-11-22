@@ -4,9 +4,16 @@ import Masonry from 'react-masonry-css';
 
 import ListItem from './ListItem';
 
-import './AllTasksView.css';
+import './MasonryView.css';
 
-export default function AllTasksView({ tasksList, moveTaskToSelectedPanel }) {
+export default function MasonryView({
+  deleteTask,
+  tasksList,
+  moveTaskToPreviousPanel,
+  moveTaskToNextPanel,
+  moveTaskToSelectedPanel,
+  removeTaskFromPanel,
+}) {
   const sortedTasksList = tasksList
     ? [...tasksList].sort(
         (task1, task2) => task2.dateCreated - task1.dateCreated
@@ -29,6 +36,7 @@ export default function AllTasksView({ tasksList, moveTaskToSelectedPanel }) {
           return (
             <Box key={task.id}>
               <ListItem
+                deleteTask={deleteTask}
                 backgroundColor={getBackgroundColor(task.status)}
                 handleOnClick={
                   moveTaskToSelectedPanel
@@ -37,6 +45,9 @@ export default function AllTasksView({ tasksList, moveTaskToSelectedPanel }) {
                       }
                     : null
                 }
+                moveTaskToNextPanel={moveTaskToNextPanel}
+                moveTaskToPreviousPanel={moveTaskToPreviousPanel}
+                removeTaskFromPanel={removeTaskFromPanel}
                 task={task}
               />
             </Box>
